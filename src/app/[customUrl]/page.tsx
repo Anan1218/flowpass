@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import MainLayout from '@/components/MainLayout/MainLayout';
 import QRScanner from '@/components/scanner/QRScanner';
 import ScanResult from '@/components/scanner/ScanResult';
 
@@ -32,19 +31,17 @@ export default function ScanPage() {
   };
 
   return (
-    <MainLayout title="FlowPass - Scan QR Code">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">
-          Scan QR Code
-        </h1>
-        <QRScanner onScan={handleScan} onError={handleError} />
-        {scanResult && (
-          <ScanResult
-            isValid={scanResult.isValid}
-            message={scanResult.message}
-          />
-        )}
-      </div>
-    </MainLayout>
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold text-center mb-8">
+        Scan QR Code
+      </h1>
+      <QRScanner onScan={handleScan} onError={handleError} />
+      {scanResult && (
+        <ScanResult
+          isValid={scanResult.isValid}
+          message={scanResult.message}
+        />
+      )}
+    </div>
   );
 } 

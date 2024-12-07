@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import MainLayout from '@/components/MainLayout/MainLayout';
 import PaymentForm from '@/components/payment/PaymentForm';
 
 export const metadata: Metadata = {
@@ -9,13 +8,11 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <MainLayout>
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-8">
-          Welcome to FlowPass
-        </h1>
-        <PaymentForm />
-      </div>
-    </MainLayout>
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-4xl font-bold text-center mb-8">
+        Welcome to FlowPass
+      </h1>
+      <PaymentForm />
+    </div>
   );
 }
