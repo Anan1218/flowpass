@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import MainLayout from '@/components/layout/MainLayout';
+import MainLayout from '@/components/MainLayout/MainLayout';
 import QRScanner from '@/components/scanner/QRScanner';
 import ScanResult from '@/components/scanner/ScanResult';
 

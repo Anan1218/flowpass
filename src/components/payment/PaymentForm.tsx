@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { nanoid } from 'nanoid';
 
 const PaymentForm = () => {
   const router = useRouter();
@@ -14,10 +15,7 @@ const PaymentForm = () => {
   });
 
   const generateCustomUrl = () => {
-    // Only called during click event, not during render
-    const timestamp = Date.now().toString(36);
-    const randomStr = Math.random().toString(36).substring(2, 8);
-    return `${timestamp}-${randomStr}`;
+    return nanoid(10); // Generates a 10-character ID
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,25 +24,18 @@ const PaymentForm = () => {
     setError(null);
 
     try {
+      // Simulate form submission
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulates a network request
+
       const customUrl = generateCustomUrl();
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          customUrl,
-        }),
+      router.push(`/${customUrl}`);
+
+      // Reset form
+      setFormData({
+        email: '',
+        name: '',
+        customUrl: '',
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
-      }
-
-      router.push(data.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
