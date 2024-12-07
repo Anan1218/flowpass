@@ -9,14 +9,14 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #111827;
     --foreground: #ededed;
   }
 }
 
 body {
   color: var(--foreground);
-  background: var(--background);
+  background: var(--background) !important;
 }
 
 @layer components {
@@ -30,5 +30,11 @@ body {
 
   .btn-secondary {
     @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #111827 !important;
   }
 }

@@ -19,8 +19,8 @@ export default function Navbar() {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
-                <Link href="/generate-qr" className="btn btn-secondary">
-                  Generate QR
+                <Link href="/admin" className="btn btn-secondary">
+                  Dashboard
                 </Link>
                 <button
                   onClick={() => signOut()}
