@@ -78,7 +78,7 @@ export default function StorefrontPage() {
         {storeData?.name || 'Welcome'}
       </h1>
       <div className="bg-white rounded-lg shadow p-6">
-        <PaymentForm storeId={params.storeId} />
+        <PaymentForm storeId={params.storeId as string} />
       </div>
     </div>
   );

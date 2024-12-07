@@ -3,8 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { nanoid } from 'nanoid';
+import { db } from '@/utils/firebase';
+import { addDoc, collection } from 'firebase/firestore';
 
-const PaymentForm = () => {
+interface PaymentFormProps {
+  storeId: string;
+}
+
+const PaymentForm = ({ storeId }: PaymentFormProps) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,18 +30,21 @@ const PaymentForm = () => {
     setError(null);
 
     try {
-      // Simulate form submission
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulates a network request
-
-      const customUrl = generateCustomUrl();
-      router.push(`/${customUrl}`);
-
-      // Reset form
-      setFormData({
-        email: '',
-        name: '',
-        customUrl: '',
+      const generatedPassId = generateCustomUrl(); // Generate the ID first
+      
+      // Create a new pass document with the generated passId
+      const passRef = await addDoc(collection(db, 'passes'), {
+        passId: generatedPassId,  // Store this exact ID
+        active: true,
+        userId: formData.email,
+        storeId: storeId,
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       });
+
+      // Redirect using the generated passId, not the document ID
+      router.push(`/pass/${generatedPassId}`);
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
