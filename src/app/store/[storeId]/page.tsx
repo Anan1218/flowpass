@@ -11,6 +11,7 @@ interface StoreData {
   userId: string;
   createdAt: Date;
   active: boolean;
+  imageUrl: string;
 }
 
 export default function StorefrontPage() {
@@ -18,6 +19,7 @@ export default function StorefrontPage() {
   const [storeData, setStoreData] = useState<StoreData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     const fetchStoreData = async () => {
@@ -36,7 +38,8 @@ export default function StorefrontPage() {
             name: data.name,
             userId: data.userId,
             createdAt: data.createdAt.toDate(),
-            active: data.active
+            active: data.active,
+            imageUrl: data.imageUrl
           });
         } else {
           setError('Store not found or inactive');
@@ -53,6 +56,13 @@ export default function StorefrontPage() {
       fetchStoreData();
     }
   }, [params.storeId]);
+
+  const handleQuantityChange = (change: number) => {
+    const newQuantity = quantity + change;
+    if (newQuantity >= 1 && newQuantity <= 25) {
+      setQuantity(newQuantity);
+    }
+  };
 
   if (loading) {
     return (
@@ -73,12 +83,50 @@ export default function StorefrontPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-8">
-        {storeData?.name || 'Welcome'}
-      </h1>
-      <div className="bg-white rounded-lg shadow p-6">
-        <PaymentForm storeId={params.storeId as string} />
+    <div className="max-w-md mx-auto p-4">
+      <div className="mb-6">
+        <img 
+          src={storeData?.imageUrl || '/default-store-image.jpg'} 
+          alt={storeData?.name} 
+          className="w-full h-48 object-cover rounded-lg"
+        />
+      </div>
+
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold">Only 25 left at</h2>
+        <div className="text-4xl font-bold text-green-500 my-2">$20</div>
+        <p className="text-gray-600 text-sm flex items-center justify-center gap-2">
+          <span className="text-yellow-500">⚡</span>
+          25 additional passes will be sold at $20
+        </p>
+      </div>
+
+      <div className="mb-8">
+        <h3 className="text-center text-xl mb-4">Select Quantity</h3>
+        <p className="text-center text-gray-600 mb-4">How many Fast Passes would you like?</p>
+        <div className="flex items-center justify-center gap-4">
+          <button 
+            onClick={() => handleQuantityChange(-1)}
+            className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center text-2xl"
+          >
+            -
+          </button>
+          <span className="text-3xl font-bold">{quantity}</span>
+          <button 
+            onClick={() => handleQuantityChange(1)}
+            className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center text-2xl"
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg">
+        <PaymentForm 
+          storeId={params.storeId as string} 
+          quantity={quantity}
+          price={20}
+        />
       </div>
     </div>
   );
