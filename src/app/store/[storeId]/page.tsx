@@ -12,6 +12,9 @@ interface StoreData {
   createdAt: Date;
   active: boolean;
   imageUrl: string;
+  price: number;
+  maxPasses: number;
+  // Add any other fields you need
 }
 
 export default function StorefrontPage() {
@@ -20,27 +23,45 @@ export default function StorefrontPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [availablePasses, setAvailablePasses] = useState(0);
 
   useEffect(() => {
     const fetchStoreData = async () => {
       try {
-        const q = query(
+        // Fetch store data
+        const storeQuery = query(
           collection(db, 'stores'),
           where('storeId', '==', params.storeId),
           where('active', '==', true)
         );
 
-        const querySnapshot = await getDocs(q);
+        const storeSnapshot = await getDocs(storeQuery);
 
-        if (!querySnapshot.empty) {
-          const data = querySnapshot.docs[0].data();
+        if (!storeSnapshot.empty) {
+          const data = storeSnapshot.docs[0].data();
           setStoreData({
             name: data.name,
             userId: data.userId,
             createdAt: data.createdAt.toDate(),
             active: data.active,
-            imageUrl: data.imageUrl
+            imageUrl: data.imageUrl,
+            price: data.price,
+            maxPasses: data.maxPasses
           });
+
+          // Fetch sold passes count
+          const passesQuery = query(
+            collection(db, 'passes'),
+            where('storeId', '==', params.storeId),
+            where('date', '==', new Date().toISOString().split('T')[0]) // Today's date in YYYY-MM-DD format
+          );
+
+          const passesSnapshot = await getDocs(passesQuery);
+          const soldPasses = passesSnapshot.docs.reduce((total, doc) => 
+            total + (doc.data().quantity || 1), 0
+          );
+
+          setAvailablePasses(data.maxPasses - soldPasses);
         } else {
           setError('Store not found or inactive');
         }
@@ -59,7 +80,7 @@ export default function StorefrontPage() {
 
   const handleQuantityChange = (change: number) => {
     const newQuantity = quantity + change;
-    if (newQuantity >= 1 && newQuantity <= 25) {
+    if (newQuantity >= 1 && newQuantity <= availablePasses) {
       setQuantity(newQuantity);
     }
   };
@@ -82,22 +103,32 @@ export default function StorefrontPage() {
     );
   }
 
+  if (!storeData || availablePasses <= 0) {
+    return (
+      <div className="max-w-4xl mx-auto p-4">
+        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 text-yellow-700">
+          No passes available for today
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-md mx-auto p-4">
       <div className="mb-6">
         <img 
-          src={storeData?.imageUrl || '/default-store-image.jpg'} 
-          alt={storeData?.name} 
+          src={storeData.imageUrl || '/default-store-image.jpg'} 
+          alt={storeData.name} 
           className="w-full h-48 object-cover rounded-lg"
         />
       </div>
 
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold">Only 25 left at</h2>
-        <div className="text-4xl font-bold text-green-500 my-2">$20</div>
+        <h2 className="text-2xl font-bold">Only {availablePasses} left at</h2>
+        <div className="text-4xl font-bold text-green-500 my-2">${storeData.price}</div>
         <p className="text-gray-600 text-sm flex items-center justify-center gap-2">
           <span className="text-yellow-500">⚡</span>
-          25 additional passes will be sold at $20
+          {storeData.maxPasses} passes available daily
         </p>
       </div>
 
@@ -107,14 +138,16 @@ export default function StorefrontPage() {
         <div className="flex items-center justify-center gap-4">
           <button 
             onClick={() => handleQuantityChange(-1)}
-            className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center text-2xl"
+            disabled={quantity <= 1}
+            className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center text-2xl disabled:opacity-50"
           >
             -
           </button>
           <span className="text-3xl font-bold">{quantity}</span>
           <button 
             onClick={() => handleQuantityChange(1)}
-            className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center text-2xl"
+            disabled={quantity >= availablePasses}
+            className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center text-2xl disabled:opacity-50"
           >
             +
           </button>
@@ -125,7 +158,7 @@ export default function StorefrontPage() {
         <PaymentForm 
           storeId={params.storeId as string} 
           quantity={quantity}
-          price={20}
+          price={storeData.price}
         />
       </div>
     </div>
