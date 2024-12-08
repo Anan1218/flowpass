@@ -11,6 +11,9 @@ export async function POST(request: Request) {
   try {
     const { phoneNumber, message } = await request.json();
 
+    console.log('Sending SMS to:', phoneNumber);
+    console.log('Message:', message);
+
     //TODO: Uncomment this when ready to send SMS
     // await client.messages.create({
     //   body: message,

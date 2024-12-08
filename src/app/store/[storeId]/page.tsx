@@ -128,8 +128,13 @@ export default function StorefrontPage() {
         return addDoc(passesCollection, passData);
       });
 
-      await Promise.all(passPromises);
+      const passRefs = await Promise.all(passPromises);
+      const firstPassId = passRefs[0].id; // Get the ID of the first pass
 
+      // Construct the URL for the order confirmation page
+      let passUrl = `${window.location.origin}/order-confirmation/${firstPassId}?quantity=${purchasedQuantity}`;
+      let smsMessage = `Thank you for purchasing ${purchasedQuantity} pass${purchasedQuantity > 1 ? 'es' : ''} at ${storeData?.name}. Access your pass here: ${passUrl}`;
+    
       // Send SMS notification
       const response = await fetch('/api/send-sms', {
         method: 'POST',
@@ -138,7 +143,7 @@ export default function StorefrontPage() {
         },
         body: JSON.stringify({
           phoneNumber: phoneNumber,
-          message: `Thank you for purchasing ${purchasedQuantity} pass${purchasedQuantity > 1 ? 'es' : ''} at ${storeData?.name}. Show this message at the entrance.`,
+          message: smsMessage,
         }),
       });
 
