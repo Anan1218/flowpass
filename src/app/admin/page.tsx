@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { collection, addDoc, query, where, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, query, where, orderBy, getDocs, deleteDoc, doc, getDoc, limit } from 'firebase/firestore';
 import { db } from '@/utils/firebase';
 import { nanoid } from 'nanoid';
 import QRCode from 'react-qr-code';
@@ -23,6 +23,28 @@ interface Store {
   imageUrl: string;
   price: number;
   maxPasses: number;
+}
+
+interface Pass {
+  id: string;
+  createdAt: any; // Firebase Timestamp
+  quantity: number;
+  storeId: string;
+  passId: string;
+  active: boolean;
+  usedAt: any | null;
+  expiresAt: any;
+  paymentIntentId: string;
+}
+
+interface StoreStats {
+  [key: string]: {
+    dailyPasses: {
+      remainingPasses: number;
+      date: string;
+    } | null;
+    recentPasses: Pass[];
+  }
 }
 
 export default function AdminDashboard() {
@@ -46,6 +68,7 @@ export default function AdminDashboard() {
     isOpen: false,
     storeId: null
   });
+  const [storeStats, setStoreStats] = useState<StoreStats>({});
 
   // Function to load existing stores
   const loadStores = async () => {
@@ -60,11 +83,13 @@ export default function AdminDashboard() {
       
       const querySnapshot = await getDocs(q);
       const storesData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
         ...doc.data()
       })) as Store[];
       
       setStores(storesData);
+      
+      // Load stats for each store
+      storesData.forEach(store => loadStoreStats(store));
     } catch (err) {
       console.error('Error loading stores:', err);
       setError('Failed to load stores');
@@ -192,6 +217,55 @@ export default function AdminDashboard() {
     }
   };
 
+  // Update the function to load store statistics
+  const loadStoreStats = async (store: Store) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Get recent passes using only storeId
+      const passesQuery = query(
+        collection(db, 'passes'),
+        where('storeId', '==', store.storeId),
+        orderBy('createdAt', 'desc'),
+        limit(5)
+      );
+
+      const passesSnapshot = await getDocs(passesQuery);
+      
+      setStoreStats(prev => ({
+        ...prev,
+        [store.storeId]: {
+          dailyPasses: null, // We'll handle daily passes differently if needed
+          recentPasses: passesSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as Pass[]
+        }
+      }));
+
+      // Add console logs for debugging
+      console.log(`Stats for store ${store.storeId}:`, {
+        recentPasses: passesSnapshot.docs.map(doc => doc.data())
+      });
+    } catch (error) {
+      console.error('Error loading store stats:', error);
+    }
+  };
+
+  // Update the useEffect to pass the entire store object
+  useEffect(() => {
+    if (stores.length > 0) {
+      stores.forEach(store => loadStoreStats(store));
+      
+      // Refresh every minute
+      const interval = setInterval(() => {
+        stores.forEach(store => loadStoreStats(store));
+      }, 60000);
+
+      return () => clearInterval(interval);
+    }
+  }, [stores]);
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -305,53 +379,106 @@ export default function AdminDashboard() {
 
       <div>
         <h2 className="text-xl font-bold mb-4">Your Stores</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-6">
           {stores.map((store) => (
             <div key={store.id} className="border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
-              <div className="p-4 flex flex-col">
-                {/* Store Header Image */}
-                {store.imageUrl && (
-                  <div className="mb-4 w-full h-32 rounded-lg overflow-hidden">
-                    <img 
-                      src={store.imageUrl} 
-                      alt={store.name}
-                      className="w-full h-full object-cover"
-                    />
+              <div className="p-6">
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Store Info Section */}
+                  <div className="md:w-1/3">
+                    {/* Store Header Image */}
+                    {store.imageUrl && (
+                      <div className="mb-4 w-full h-48 rounded-lg overflow-hidden">
+                        <img 
+                          src={store.imageUrl} 
+                          alt={store.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+
+                    {/* Store Info */}
+                    <div className="text-center mb-4">
+                      <h3 className="font-bold text-xl text-gray-900">{store.name}</h3>
+                      <p className="text-sm text-gray-900 mt-1">
+                        ${store.price} per pass • {store.maxPasses} passes/night
+                      </p>
+                      <p className="text-sm text-gray-700 mt-1">
+                        Created {new Date(store.createdAt.toDate()).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                    {/* QR Code */}
+                    <div className="flex items-center justify-center py-2">
+                      <div className="w-32">
+                        <QRCode
+                          value={store.storeUrl}
+                          style={{ width: '100%', height: 'auto' }}
+                        />
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-gray-900 break-all text-center mt-2">
+                      {store.storeUrl}
+                    </p>
                   </div>
-                )}
 
-                {/* Store Info */}
-                <div className="text-center mb-4">
-                  <h3 className="font-bold text-lg text-gray-800">{store.name}</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    ${store.price} per pass • {store.maxPasses} passes/night
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Created {new Date(store.createdAt.toDate()).toLocaleDateString()}
-                  </p>
-                </div>
+                  {/* Stats Section */}
+                  <div className="md:w-2/3">
+                    {/* Daily Passes Status */}
+                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                      <h4 className="font-semibold text-black text-sm mb-2">Today's Passes</h4>
+                      {storeStats[store.storeId]?.dailyPasses ? (
+                        <p className="text-center text-2xl font-bold text-black">
+                          {storeStats[store.storeId].dailyPasses.remainingPasses} / {store.maxPasses} remaining
+                        </p>
+                      ) : (
+                        <p className="text-center text-black">
+                          <span className="text-2xl font-bold">{store.maxPasses} / {store.maxPasses} remaining</span>
+                          <span className="block text-sm mt-1">No passes used today</span>
+                        </p>
+                      )}
+                    </div>
 
-                {/* QR Code */}
-                <div className="flex-grow flex items-center justify-center py-2">
-                  <div className="w-[60%]">
-                    <QRCode
-                      value={store.storeUrl}
-                      style={{ width: '100%', height: 'auto' }}
-                    />
+                    {/* Recent Passes */}
+                    <div className="mt-4">
+                      <h4 className="font-semibold text-black text-sm mb-2">Recent Passes</h4>
+                      {storeStats[store.storeId]?.recentPasses?.length > 0 ? (
+                        <div className="space-y-2">
+                          {storeStats[store.storeId].recentPasses.map((pass) => (
+                            <div key={pass.id} className="text-sm p-3 bg-gray-50 rounded flex flex-col">
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium text-black">
+                                  {pass.quantity} {pass.quantity === 1 ? 'pass' : 'passes'}
+                                </span>
+                                <span className="text-sm text-black">
+                                  {new Date(pass.createdAt.toDate()).toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="text-sm text-black mt-1">
+                                Status: {pass.active ? 'Active' : 'Used'}
+                                {pass.usedAt && ` at ${new Date(pass.usedAt.toDate()).toLocaleString()}`}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-center py-4 text-sm text-black bg-gray-50 rounded">
+                          No recent passes
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Delete Button */}
+                    <div className="mt-4">
+                      <button
+                        onClick={() => handleDeleteClick(store.id)}
+                        className="w-full px-4 py-2.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                      >
+                        Delete Store
+                      </button>
+                    </div>
                   </div>
-                </div>
-
-                {/* Store URL and Actions */}
-                <div className="mt-4 flex flex-col gap-2">
-                  <p className="text-xs text-gray-600 break-all text-center">
-                    {store.storeUrl}
-                  </p>
-                  <button
-                    onClick={() => handleDeleteClick(store.id)}
-                    className="w-full px-4 py-2.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                  >
-                    Delete Store
-                  </button>
                 </div>
               </div>
             </div>

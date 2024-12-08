@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { db } from '@/utils/firebase';
-import { collection, query, where, getDocs, doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import PaymentForm from '@/components/payment/PaymentForm';
 
 interface StoreData {
@@ -95,6 +95,29 @@ export default function StorefrontPage() {
     }
   };
 
+  const updateAvailablePasses = async (purchasedQuantity: number) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const storeQuery = query(
+        collection(db, 'stores'),
+        where('storeId', '==', params.storeId),
+        where('active', '==', true)
+      );
+      const storeSnapshot = await getDocs(storeQuery);
+      
+      if (!storeSnapshot.empty) {
+        const dailyPassesRef = doc(db, 'stores', storeSnapshot.docs[0].id, 'dailyPasses', today);
+        await updateDoc(dailyPassesRef, {
+          remainingPasses: availablePasses - purchasedQuantity
+        });
+        setAvailablePasses(prev => prev - purchasedQuantity);
+      }
+    } catch (error) {
+      console.error('Error updating passes:', error);
+      throw new Error('Failed to update remaining passes');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
@@ -169,6 +192,7 @@ export default function StorefrontPage() {
           storeId={params.storeId as string} 
           quantity={quantity}
           price={storeData.price}
+          onSuccess={() => updateAvailablePasses(quantity)}
         />
       </div>
     </div>
