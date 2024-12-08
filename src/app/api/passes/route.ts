@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { db } from '@/utils/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { nanoid } from 'nanoid';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -13,14 +12,13 @@ export async function POST(req: Request) {
     // Verify the payment intent is successful
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     if (paymentIntent.status !== 'succeeded') {
-      return new Response(
-        JSON.stringify({ error: 'Payment not successful' }),
+      return NextResponse.json(
+        { error: 'Payment not successful' },
         { status: 400 }
       );
     }
 
-    // Create a new pass
-    const passId = nanoid();
+    const passId = paymentIntent.metadata.passId;
     
     await setDoc(doc(db, 'passes', passId), {
       passId,
@@ -32,15 +30,11 @@ export async function POST(req: Request) {
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
     });
 
-    return new Response(
-      JSON.stringify({ passId }),
-      { status: 200 }
-    );
-
+    return NextResponse.json({ passId });
   } catch (error) {
     console.error('Pass creation error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Failed to create pass' }),
+    return NextResponse.json(
+      { error: 'Failed to create pass' },
       { status: 500 }
     );
   }

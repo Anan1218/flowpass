@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { nanoid } from 'nanoid';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '@/utils/firebase';
-import { headers } from 'next/headers';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -11,7 +8,6 @@ export async function POST(req: Request) {
   try {
     const { storeId } = await req.json();
     
-    // Fixed amount of $10.00
     const amountInCents = 1000;
     const passId = nanoid();
 
@@ -28,18 +24,40 @@ export async function POST(req: Request) {
       }
     });
 
-    return new Response(
-      JSON.stringify({ 
-        clientSecret: paymentIntent.client_secret,
-        passId
-      }),
-      { status: 200 }
-    );
-
+    return NextResponse.json({ 
+      clientSecret: paymentIntent.client_secret,
+      passId
+    });
   } catch (error) {
     console.error('Stripe API error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Payment intent creation failed' }),
+    return NextResponse.json(
+      { error: 'Payment intent creation failed' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(req: Request) {
+  try {
+    const url = new URL(req.url);
+    const paymentIntentId = url.searchParams.get('paymentIntentId');
+    
+    if (!paymentIntentId) {
+      return NextResponse.json(
+        { error: 'Payment intent ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    
+    return NextResponse.json({ 
+      passId: paymentIntent.metadata.passId 
+    });
+  } catch (error) {
+    console.error('Stripe confirmation error:', error);
+    return NextResponse.json(
+      { error: 'Failed to confirm payment' },
       { status: 500 }
     );
   }

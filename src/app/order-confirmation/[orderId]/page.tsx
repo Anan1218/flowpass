@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { db } from '@/utils/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@utils/firebase';
 
 interface OrderData {
   passId: string;
@@ -14,53 +14,36 @@ export default function OrderConfirmationPage() {
   const params = useParams();
   const router = useRouter();
   const [orderData, setOrderData] = useState<OrderData | null>(null);
+  const [passId, setPassId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchOrderData = async () => {
-      const passQuery = query(
-        collection(db, 'passes'),
-        where('passId', '==', params.orderId)
-      );
-
-      const passSnapshot = await getDocs(passQuery);
-      if (!passSnapshot.empty) {
-        const data = passSnapshot.docs[0].data();
-        setOrderData({
-          passId: params.orderId as string,
-          quantity: data.quantity || 1,
-        });
-      } else {
-        try {
-          const response = await fetch('/api/stripe/confirm', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              paymentIntentId: params.orderId 
-            }),
+    const fetchPassData = async () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const quantity = parseInt(searchParams.get('quantity') || '1', 10);
+      
+      try {
+        const passDoc = await getDoc(doc(db, 'passes', params.orderId as string));
+        if (passDoc.exists()) {
+          const passData = passDoc.data();
+          setPassId(passData.passId);
+          setOrderData({
+            passId: passData.passId,
+            quantity: quantity
           });
-          
-          const data = await response.json();
-          if (data.passId) {
-            setOrderData({
-              passId: data.passId,
-              quantity: data.quantity || 1,
-            });
-          }
-        } catch (err) {
-          console.error('Error confirming payment:', err);
         }
+      } catch (error) {
+        console.error('Error fetching pass:', error);
       }
     };
 
     if (params.orderId) {
-      fetchOrderData();
+      fetchPassData();
     }
   }, [params.orderId]);
 
   const handleScanNow = () => {
-    console.log('orderData', orderData);
-    if (orderData?.passId) {
-      router.push(`/pass/${orderData.passId}`);
+    if (passId) {
+      router.push(`/pass/${passId}`);
     }
   };
 

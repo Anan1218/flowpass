@@ -15,10 +15,12 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 
 interface PaymentFormProps {
   storeId: string;
+  quantity: number;
+  price: number;
 }
 
 // Wrapper component to provide Stripe context
-const PaymentForm = ({ storeId }: PaymentFormProps) => {
+const PaymentForm = ({ storeId, quantity, price }: PaymentFormProps) => {
   const [clientSecret, setClientSecret] = useState<string>();
 
   // Fetch payment intent when component mounts
@@ -28,7 +30,11 @@ const PaymentForm = ({ storeId }: PaymentFormProps) => {
         const response = await fetch('/api/stripe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ storeId }),
+          body: JSON.stringify({ 
+            storeId,
+            quantity,
+            amount: price * quantity 
+          }),
         });
         const data = await response.json();
         setClientSecret(data.clientSecret);
@@ -38,7 +44,7 @@ const PaymentForm = ({ storeId }: PaymentFormProps) => {
     };
 
     fetchPaymentIntent();
-  }, [storeId]);
+  }, [storeId, quantity, price]);
 
   if (!clientSecret) {
     return <div>Loading...</div>;
@@ -57,13 +63,13 @@ const PaymentForm = ({ storeId }: PaymentFormProps) => {
         },
       }}
     >
-      <CheckoutForm storeId={storeId} />
+      <CheckoutForm storeId={storeId} quantity={quantity} />
     </Elements>
   );
 };
 
 // Internal checkout form component
-const CheckoutForm = ({ storeId }: { storeId: string }) => {
+const CheckoutForm = ({ storeId, quantity }: { storeId: string; quantity: number }) => {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -91,17 +97,26 @@ const CheckoutForm = ({ storeId }: { storeId: string }) => {
 
       // Check if payment is successful and get the passId
       if (result.paymentIntent?.status === 'succeeded') {
-        const response = await fetch('/api/stripe/confirm', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            paymentIntentId: result.paymentIntent.id 
-          }),
+        const response = await fetch(`/api/stripe?paymentIntentId=${result.paymentIntent.id}`, {
+          method: 'GET'
         });
         
         const data = await response.json();
         if (data.passId) {
-          router.push(`/order-confirmation/${data.passId}`);
+          // Create the pass after confirming payment
+          const passResponse = await fetch('/api/passes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              paymentIntentId: result.paymentIntent.id,
+              storeId 
+            }),
+          });
+          
+          const passData = await passResponse.json();
+          if (passData.passId) {
+            router.push(`/order-confirmation/${passData.passId}`);
+          }
         }
       }
     } catch (err) {
