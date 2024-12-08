@@ -214,7 +214,7 @@ export default function AdminDashboard() {
     try {
       await deleteStore(deleteConfirmation.storeId);
       setDeleteConfirmation({ isOpen: false, storeId: null });
-    } catch (err) {
+    } catch {
       setError('Failed to delete store');
     }
   };

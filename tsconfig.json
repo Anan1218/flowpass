@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -19,11 +23,28 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@utils/*": ["src/utils/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@utils/*": [
+        "src/utils/*"
+      ]
     },
-    "baseUrl": "."
+    "baseUrl": ".",
+    "jsxImportSource": "react",
+    "types": [
+      "react",
+      "react-dom",
+      "node"
+    ]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "next-env.d.ts",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
