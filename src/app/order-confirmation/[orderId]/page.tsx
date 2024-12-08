@@ -16,6 +16,7 @@ export default function OrderConfirmationPage() {
   const params = useParams();
   const router = useRouter();
   const [orderData, setOrderData] = useState<OrderData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPassData = async () => {
@@ -29,16 +30,32 @@ export default function OrderConfirmationPage() {
             active: passData.active,
             storeId: passData.storeId
           });
+        } else {
+          // Redirect to home if pass doesn't exist
+          router.push('/');
         }
       } catch (error) {
         console.error('Error fetching pass:', error);
+        router.push('/');
+      } finally {
+        setLoading(false);
       }
     };
 
     if (params.orderId) {
       fetchPassData();
     }
-  }, [params.orderId]);
+  }, [params.orderId, router]);
+
+  // Show loading state or return null while checking
+  if (loading) {
+    return <div className="max-w-md mx-auto p-4 text-center">Loading...</div>;
+  }
+
+  // Only render the page content if we have order data
+  if (!orderData) {
+    return null;
+  }
 
   const handleScanNow = () => {
     if (orderData?.passId) {
