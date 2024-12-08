@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { db } from '@/utils/firebase';
-import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, Timestamp, addDoc } from 'firebase/firestore';
 import PaymentForm from '@/components/payment/PaymentForm';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
@@ -23,6 +23,14 @@ interface DailyPassesData {
   date: string;
   totalPasses: number;
   remainingPasses: number;
+}
+
+interface Pass {
+  storeId: string;
+  phoneNumber: string;
+  quantity: number;
+  createdAt: Date;
+  used: boolean;
 }
 
 export default function StorefrontPage() {
@@ -104,24 +112,44 @@ export default function StorefrontPage() {
 
   const updateAvailablePasses = async (purchasedQuantity: number) => {
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const storeQuery = query(
-        collection(db, 'stores'),
-        where('storeId', '==', params.storeId),
-        where('active', '==', true)
-      );
-      const storeSnapshot = await getDocs(storeQuery);
+      // Create passes documents
+      const passesCollection = collection(db, 'passes');
+      const now = new Date();
       
-      if (!storeSnapshot.empty) {
-        const dailyPassesRef = doc(db, 'stores', storeSnapshot.docs[0].id, 'dailyPasses', today);
-        await updateDoc(dailyPassesRef, {
-          remainingPasses: availablePasses - purchasedQuantity
-        });
-        setAvailablePasses(prev => prev - purchasedQuantity);
+      // Create multiple pass documents based on quantity
+      const passPromises = Array(purchasedQuantity).fill(null).map(() => {
+        const passData: Pass = {
+          storeId: params.storeId as string,
+          phoneNumber: phoneNumber,
+          quantity: 1,
+          createdAt: now,
+          used: false
+        };
+        return addDoc(passesCollection, passData);
+      });
+
+      await Promise.all(passPromises);
+
+      // Send SMS notification
+      const response = await fetch('/api/send-sms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber: phoneNumber,
+          message: `Thank you for purchasing ${purchasedQuantity} pass${purchasedQuantity > 1 ? 'es' : ''} at ${storeData?.name}. Show this message at the entrance.`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send SMS');
       }
+
+      setAvailablePasses(prev => prev - purchasedQuantity);
     } catch (error) {
       console.error('Error updating passes:', error);
-      throw new Error('Failed to update remaining passes');
+      throw new Error('Failed to update passes and send notification');
     }
   };
 
