@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { db } from '@/utils/firebase';
-import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, Timestamp, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import PaymentForm from '@/components/payment/PaymentForm';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
@@ -46,7 +46,7 @@ export default function StorefrontPage() {
   useEffect(() => {
     const fetchStoreData = async () => {
       try {
-        // 1. Fetch store data
+        // Get store data
         const storeQuery = query(
           collection(db, 'stores'),
           where('storeId', '==', params.storeId),
@@ -67,7 +67,7 @@ export default function StorefrontPage() {
             maxPasses: data.maxPasses
           });
 
-          // Calculate today's 8 AM
+          // Get today's date at 8 AM
           const now = new Date();
           const today8am = new Date(now);
           today8am.setHours(8, 0, 0, 0);
@@ -85,8 +85,15 @@ export default function StorefrontPage() {
           );
 
           const passesSnapshot = await getDocs(passesQuery);
-          const usedPasses = passesSnapshot.docs.length;
-          setAvailablePasses(data.maxPasses - usedPasses);
+          
+          let totalPassesSold = 0;
+          passesSnapshot.docs.forEach(doc => {
+            const passData = doc.data();
+            const quantity = passData.quantity || 1;
+            totalPassesSold += quantity;
+          });
+          // const totalPassesSold = 5;
+          setAvailablePasses(data.maxPasses - totalPassesSold);
         } else {
           setError('Store not found or inactive');
         }
@@ -110,14 +117,11 @@ export default function StorefrontPage() {
     }
   };
 
-  const updateAvailablePasses = async (purchasedQuantity: number) => {
+  const updateAvailablePasses = async (passId: string) => {
     try {
-      // Get the passId from the payment success response
-      const passId = await onSuccess(); // We'll need to modify PaymentForm to return this
-
       // Construct the URL for the order confirmation page
-      let passUrl = `${window.location.origin}/order-confirmation/${passId}?quantity=${purchasedQuantity}`;
-      let smsMessage = `Thank you for purchasing ${purchasedQuantity} pass${purchasedQuantity > 1 ? 'es' : ''} at ${storeData?.name}. Access your pass here: ${passUrl}`;
+      let passUrl = `${window.location.origin}/order-confirmation/${passId}?quantity=${quantity}`;
+      let smsMessage = `Thank you for purchasing ${quantity} pass${quantity > 1 ? 'es' : ''} at ${storeData?.name}. Access your pass here: ${passUrl}`;
     
       // Send SMS notification
       const response = await fetch('/api/send-sms', {
@@ -135,7 +139,11 @@ export default function StorefrontPage() {
         throw new Error('Failed to send SMS');
       }
 
-      setAvailablePasses(prev => prev - purchasedQuantity);
+      // Update the available passes count
+      setAvailablePasses(prev => prev - quantity);
+
+      // Navigate to the order confirmation page
+      window.location.href = `/order-confirmation/${passId}?quantity=${quantity}`;
     } catch (error) {
       console.error('Error sending notification:', error);
       throw new Error('Failed to send notification');
@@ -232,7 +240,7 @@ export default function StorefrontPage() {
           storeId={params.storeId as string} 
           quantity={quantity}
           price={storeData.price}
-          onSuccess={() => updateAvailablePasses(quantity)}
+          onSuccess={(passId) => updateAvailablePasses(passId)}
           phoneNumber={phoneNumber}
           disabled={!isValidPhone}
         />
