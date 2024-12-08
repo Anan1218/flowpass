@@ -18,6 +18,11 @@ export async function POST(req: Request) {
         enabled: true,
         allow_redirects: 'always'
       },
+      payment_method_options: {
+        card: {
+          request_three_d_secure: 'automatic',
+        }
+      },
       metadata: {
         passId,
         storeId,

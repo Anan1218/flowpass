@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import { db } from '@/utils/firebase';
 import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import PaymentForm from '@/components/payment/PaymentForm';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 interface StoreData {
   name: string;
@@ -30,6 +32,8 @@ export default function StorefrontPage() {
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [availablePasses, setAvailablePasses] = useState(0);
+  const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const [isValidPhone, setIsValidPhone] = useState(false);
 
   useEffect(() => {
     const fetchStoreData = async () => {
@@ -121,6 +125,11 @@ export default function StorefrontPage() {
     }
   };
 
+  const handlePhoneChange = (value: string | undefined) => {
+    setPhoneNumber(value || '');
+    setIsValidPhone(value ? value.length >= 10 : false);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
@@ -190,12 +199,25 @@ export default function StorefrontPage() {
         </div>
       </div>
 
+      <div className="mb-8">
+        <h3 className="text-center text-xl mb-4">Enter Phone Number</h3>
+        <PhoneInput
+          international
+          defaultCountry="US"
+          value={phoneNumber}
+          onChange={handlePhoneChange}
+          className="w-full p-3 border rounded-lg"
+        />
+      </div>
+
       <div className="bg-white rounded-lg">
         <PaymentForm 
           storeId={params.storeId as string} 
           quantity={quantity}
           price={storeData.price}
           onSuccess={() => updateAvailablePasses(quantity)}
+          phoneNumber={phoneNumber}
+          disabled={!isValidPhone}
         />
       </div>
     </div>

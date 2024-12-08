@@ -17,15 +17,20 @@ interface PaymentFormProps {
   storeId: string;
   quantity: number;
   price: number;
+  phoneNumber: string;
+  disabled: boolean;
+  onSuccess?: () => void;
 }
 
 // Wrapper component to provide Stripe context
-const PaymentForm = ({ storeId, quantity, price }: PaymentFormProps) => {
+const PaymentForm = ({ storeId, quantity, price, phoneNumber, disabled, onSuccess }: PaymentFormProps) => {
   const [clientSecret, setClientSecret] = useState<string>();
 
-  // Fetch payment intent when component mounts
+  // Only fetch payment intent if phone number is valid
   useEffect(() => {
     const fetchPaymentIntent = async () => {
+      if (disabled) return; // Don't fetch if phone number is invalid
+
       try {
         const response = await fetch('/api/stripe', {
           method: 'POST',
@@ -44,7 +49,17 @@ const PaymentForm = ({ storeId, quantity, price }: PaymentFormProps) => {
     };
 
     fetchPaymentIntent();
-  }, [storeId, quantity, price]);
+  }, [storeId, quantity, price, disabled]);
+
+  if (disabled) {
+    return (
+      <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow">
+        <div className="text-center text-gray-600">
+          Please enter a valid phone number to proceed with payment
+        </div>
+      </div>
+    );
+  }
 
   if (!clientSecret) {
     return <div>Loading...</div>;
@@ -63,13 +78,31 @@ const PaymentForm = ({ storeId, quantity, price }: PaymentFormProps) => {
         },
       }}
     >
-      <CheckoutForm storeId={storeId} quantity={quantity} />
+      <CheckoutForm 
+        storeId={storeId} 
+        quantity={quantity} 
+        phoneNumber={phoneNumber}
+        disabled={disabled}
+        onSuccess={onSuccess}
+      />
     </Elements>
   );
 };
 
 // Internal checkout form component
-const CheckoutForm = ({ storeId, quantity }: { storeId: string; quantity: number }) => {
+const CheckoutForm = ({ 
+  storeId, 
+  quantity, 
+  phoneNumber,
+  disabled,
+  onSuccess 
+}: { 
+  storeId: string; 
+  quantity: number;
+  phoneNumber: string;
+  disabled: boolean;
+  onSuccess?: () => void;
+}) => {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -78,7 +111,7 @@ const CheckoutForm = ({ storeId, quantity }: { storeId: string; quantity: number
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe || !elements || disabled) return;
 
     setLoading(true);
     setError(null);
@@ -95,7 +128,6 @@ const CheckoutForm = ({ storeId, quantity }: { storeId: string; quantity: number
         return;
       }
 
-      // Check if payment is successful and get the passId
       if (result.paymentIntent?.status === 'succeeded') {
         const response = await fetch(`/api/stripe?paymentIntentId=${result.paymentIntent.id}`, {
           method: 'GET'
@@ -103,18 +135,20 @@ const CheckoutForm = ({ storeId, quantity }: { storeId: string; quantity: number
         
         const data = await response.json();
         if (data.passId) {
-          // Create the pass after confirming payment
+          // Include phone number in the passes API call
           const passResponse = await fetch('/api/passes', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
               paymentIntentId: result.paymentIntent.id,
-              storeId 
+              storeId,
+              phoneNumber // Add phone number to the request
             }),
           });
           
           const passData = await passResponse.json();
           if (passData.passId) {
+            onSuccess?.(); // Call onSuccess callback if provided
             router.push(`/order-confirmation/${passData.passId}`);
           }
         }
@@ -128,7 +162,17 @@ const CheckoutForm = ({ storeId, quantity }: { storeId: string; quantity: number
   return (
     <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow">
       <form onSubmit={handleSubmit} className="space-y-6">
-        <PaymentElement />
+        <PaymentElement 
+          options={{
+            fields: {
+              billingDetails: 'auto'
+            },
+            wallets: {
+              applePay: 'auto',
+              googlePay: 'auto'
+            }
+          }}
+        />
         {error && (
           <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
             {error}
