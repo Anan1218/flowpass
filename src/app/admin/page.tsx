@@ -9,6 +9,7 @@ import { nanoid } from 'nanoid';
 import QRCode from 'react-qr-code';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/utils/firebase';
+import Link from 'next/link';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
@@ -43,6 +44,7 @@ interface StoreStats {
       remainingPasses: number;
       date: string;
     } | null;
+    dailyProfit: number;
     recentPasses: Pass[];
   }
 }
@@ -239,7 +241,17 @@ export default function AdminDashboard() {
       );
 
       const passesSnapshot = await getDocs(passesQuery);
-      const todaysPasses = passesSnapshot.docs.length;
+      
+      // Calculate totals
+      let totalPassesUsed = 0;
+      let dailyProfit = 0;
+      
+      passesSnapshot.docs.forEach(doc => {
+        const passData = doc.data();
+        const quantity = passData.quantity || 1;
+        totalPassesUsed += quantity;
+        dailyProfit += quantity * store.price; // Calculate profit based on quantity
+      });
       
       // Get recent passes for history
       const recentPassesQuery = query(
@@ -255,9 +267,10 @@ export default function AdminDashboard() {
         ...prev,
         [store.storeId]: {
           dailyPasses: {
-            remainingPasses: store.maxPasses - todaysPasses,
+            remainingPasses: store.maxPasses - totalPassesUsed,
             date: today8am.toISOString()
           },
+          dailyProfit: dailyProfit,
           recentPasses: recentPassesSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
@@ -443,24 +456,45 @@ export default function AdminDashboard() {
 
                   {/* Stats Section */}
                   <div className="md:w-2/3">
-                    {/* Daily Passes Status */}
-                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                      <h4 className="font-semibold text-black text-sm mb-2">Today's Passes</h4>
-                      {storeStats[store.storeId]?.dailyPasses ? (
-                        <p className="text-center text-2xl font-bold text-black">
-                          {storeStats[store.storeId].dailyPasses.remainingPasses} / {store.maxPasses} remaining
+                    {/* Stats Grid - First Row */}
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      {/* Daily Passes Status */}
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-black text-sm mb-2">Today's Passes</h4>
+                        {storeStats[store.storeId]?.dailyPasses ? (
+                          <p className="text-center text-2xl font-bold text-black">
+                            {storeStats[store.storeId].dailyPasses.remainingPasses} / {store.maxPasses} remaining
+                          </p>
+                        ) : (
+                          <p className="text-center text-black">
+                            <span className="text-2xl font-bold">{store.maxPasses} / {store.maxPasses} remaining</span>
+                            <span className="block text-sm mt-1">No passes used today</span>
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Daily Profit */}
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-black text-sm mb-2">Today's Profit</h4>
+                        <p className="text-center">
+                          <span className="text-2xl font-bold text-green-600">
+                            ${storeStats[store.storeId]?.dailyProfit?.toFixed(2) || '0.00'}
+                          </span>
                         </p>
-                      ) : (
-                        <p className="text-center text-black">
-                          <span className="text-2xl font-bold">{store.maxPasses} / {store.maxPasses} remaining</span>
-                          <span className="block text-sm mt-1">No passes used today</span>
-                        </p>
-                      )}
+                      </div>
                     </div>
 
-                    {/* Recent Passes */}
-                    <div className="mt-4">
-                      <h4 className="font-semibold text-black text-sm mb-2">Recent Passes</h4>
+                    {/* Recent Passes with View All button */}
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-semibold text-black text-sm">Recent Passes</h4>
+                        <Link 
+                          href={`/admin/transactions/${store.storeId}`}
+                          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                        >
+                          View All Transactions →
+                        </Link>
+                      </div>
                       {storeStats[store.storeId]?.recentPasses?.length > 0 ? (
                         <div className="space-y-2">
                           {storeStats[store.storeId].recentPasses.map((pass) => (
