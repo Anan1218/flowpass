@@ -191,7 +191,6 @@ export default function PassValidationPage() {
                       : 'Pass has expired'
             }
             partySize={passData?.partySize}
-            showUsedWarning={hasScanned && !scanError}
           />
         </div>
       )}

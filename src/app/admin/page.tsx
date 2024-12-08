@@ -465,7 +465,7 @@ export default function AdminDashboard() {
                         <h4 className="font-semibold text-black text-sm mb-2">Today's Passes</h4>
                         {storeStats[store.storeId]?.dailyPasses ? (
                           <p className="text-center text-2xl font-bold text-black">
-                            {storeStats[store.storeId].dailyPasses.remainingPasses} / {store.maxPasses} remaining
+                            {storeStats[store.storeId]?.dailyPasses?.remainingPasses} / {store.maxPasses} remaining
                           </p>
                         ) : (
                           <p className="text-center text-black">
