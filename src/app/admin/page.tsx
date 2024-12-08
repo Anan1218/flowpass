@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { collection, addDoc, query, where, orderBy, getDocs, deleteDoc, doc, getDoc, limit } from 'firebase/firestore';
+import { collection, addDoc, query, where, orderBy, getDocs, deleteDoc, doc, limit } from 'firebase/firestore';
 import { db } from '@/utils/firebase';
 import { nanoid } from 'nanoid';
 import QRCode from 'react-qr-code';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/utils/firebase';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
@@ -50,9 +51,10 @@ interface StoreStats {
 }
 
 export default function AdminDashboard() {
-  const { user, loading } = useAuthContext();
+  const { user, loading: authLoading } = useAuthContext();
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [stores, setStores] = useState<Store[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -72,30 +74,30 @@ export default function AdminDashboard() {
   const [storeStats, setStoreStats] = useState<StoreStats>({});
 
   // Function to load existing stores
-  const loadStores = async () => {
-    if (!user) return;
-    
+  const loadStores = useCallback(async () => {
     try {
+      setLoading(true);
+      const storesRef = collection(db, 'stores');
       const q = query(
-        collection(db, 'stores'),
-        where('userId', '==', user.uid),
+        storesRef,
+        where('userId', '==', user?.uid),
         orderBy('createdAt', 'desc')
       );
       
       const querySnapshot = await getDocs(q);
       const storesData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
         ...doc.data()
       })) as Store[];
       
       setStores(storesData);
-      
-      // Load stats for each store
-      storesData.forEach(store => loadStoreStats(store));
-    } catch (err) {
-      console.error('Error loading stores:', err);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading stores:', error);
       setError('Failed to load stores');
+      setLoading(false);
     }
-  };
+  }, [user?.uid]);
 
   // Function to handle image upload
   const uploadImage = async (file: File) => {
@@ -172,17 +174,17 @@ export default function AdminDashboard() {
 
   // Check authentication
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       router.push('/signin');
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
 
   // Load stores on mount
   useEffect(() => {
     if (user) {
       loadStores();
     }
-  }, [user]);
+  }, [user, loadStores]);
 
   const validateImage = (file: File) => {
     const MAX_SIZE = 5 * 1024 * 1024; // 5MB
@@ -418,9 +420,11 @@ export default function AdminDashboard() {
                     {/* Store Header Image */}
                     {store.imageUrl && (
                       <div className="mb-4 w-full h-48 rounded-lg overflow-hidden">
-                        <img 
+                        <Image 
                           src={store.imageUrl} 
                           alt={store.name}
+                          width={500}
+                          height={300}
                           className="w-full h-full object-cover"
                         />
                       </div>

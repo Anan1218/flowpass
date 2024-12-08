@@ -15,11 +15,11 @@ export async function POST(request: Request) {
     console.log('Message:', message);
 
     //TODO: Uncomment this when ready to send SMS
-    // await client.messages.create({
-    //   body: message,
-    //   from: twilioPhoneNumber,
-    //   to: phoneNumber
-    // });
+    await client.messages.create({
+      body: message,
+      from: twilioPhoneNumber,
+      to: phoneNumber
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

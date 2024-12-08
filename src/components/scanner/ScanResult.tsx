@@ -4,14 +4,12 @@ interface ScanResultProps {
   isValid: boolean;
   message: string;
   partySize?: number;
-  showUsedWarning?: boolean;
 }
 
 export default function ScanResult({ 
   isValid, 
   message, 
-  partySize, 
-  showUsedWarning 
+  partySize
 }: ScanResultProps) {
   return (
     <div className={`mt-8 p-4 rounded-lg text-center ${

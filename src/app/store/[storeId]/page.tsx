@@ -7,6 +7,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import PaymentForm from '@/components/payment/PaymentForm';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
+import Image from 'next/image';
 
 interface StoreData {
   name: string;
@@ -106,8 +107,8 @@ export default function StorefrontPage() {
   const updateAvailablePasses = async (passId: string) => {
     try {
       // Construct the URL for the order confirmation page
-      let passUrl = `${window.location.origin}/order-confirmation/${passId}?quantity=${quantity}`;
-      let smsMessage = `Thank you for purchasing ${quantity} pass${quantity > 1 ? 'es' : ''} at ${storeData?.name}. Access your pass here: ${passUrl}`;
+      const passUrl = `${window.location.origin}/order-confirmation/${passId}?quantity=${quantity}`;
+      const smsMessage = `Thank you for purchasing ${quantity} pass${quantity > 1 ? 'es' : ''} at ${storeData?.name}. Access your pass here: ${passUrl}`;
     
       // Send SMS notification
       const response = await fetch('/api/send-sms', {
@@ -172,9 +173,11 @@ export default function StorefrontPage() {
   return (
     <div className="max-w-md mx-auto p-4">
       <div className="mb-6">
-        <img 
+        <Image 
           src={storeData.imageUrl || '/default-store-image.jpg'} 
           alt={storeData.name} 
+          width={800}
+          height={400}
           className="w-full h-48 object-cover rounded-lg"
         />
       </div>
