@@ -3,9 +3,16 @@ import React from 'react';
 interface ScanResultProps {
   isValid: boolean;
   message: string;
+  partySize?: number;
+  showUsedWarning?: boolean;
 }
 
-export default function ScanResult({ isValid, message }: ScanResultProps) {
+export default function ScanResult({ 
+  isValid, 
+  message, 
+  partySize, 
+  showUsedWarning 
+}: ScanResultProps) {
   return (
     <div className={`mt-8 p-4 rounded-lg text-center ${
       isValid 
@@ -20,6 +27,11 @@ export default function ScanResult({ isValid, message }: ScanResultProps) {
       <p className={isValid ? 'text-green-600' : 'text-red-600'}>
         {message}
       </p>
+      {isValid && partySize && (
+        <p className="mt-2 text-green-600 font-semibold">
+          Valid for entry of {partySize} {partySize === 1 ? 'person' : 'people'}
+        </p>
+      )}
     </div>
   );
 } 

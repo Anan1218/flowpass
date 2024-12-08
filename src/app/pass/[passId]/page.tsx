@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { db } from '@/utils/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import ScanResult from '@/components/scanner/ScanResult';
 import QRScanner from '@/components/scanner/QRScanner';
 
@@ -13,6 +13,7 @@ interface PassData {
   storeId: string;
   createdAt: Date;
   expiresAt: Date;
+  partySize: number;
 }
 
 export default function PassValidationPage() {
@@ -53,7 +54,8 @@ export default function PassValidationPage() {
             userId: data.userId,
             storeId: data.storeId,
             createdAt: data.createdAt.toDate(),
-            expiresAt: expiresAt
+            expiresAt: expiresAt,
+            partySize: data.partySize
           });
 
           const isValid = now < expiresAt && data.active && isStoreValid;
@@ -86,10 +88,13 @@ export default function PassValidationPage() {
     }
   }, [params.passId]);
 
-  const handleScan = (scannedData: string | null) => {
+  const handleScan = async (scannedData: string | null) => {
     if (!scannedData) return;
     
     try {
+      // Reset scan error at the start of each new scan attempt
+      setScanError(null);
+      
       console.log('Scanned Data:', scannedData);
       
       // Extract storeId from the URL
@@ -99,8 +104,30 @@ export default function PassValidationPage() {
       
       // Verify that the scanned QR code matches the expected store
       if (passData && scannedStoreId === passData.storeId) {
-        setHasScanned(true);
-        setScanError(null);
+        // Get the pass document reference
+        const passQuery = query(
+          collection(db, 'passes'),
+          where('passId', '==', params.passId),
+          where('active', '==', true)
+        );
+        
+        const passSnapshot = await getDocs(passQuery);
+        
+        if (!passSnapshot.empty) {
+          const passDoc = passSnapshot.docs[0];
+          
+          // Update the pass to set active to false
+          await updateDoc(doc(db, 'passes', passDoc.id), {
+            active: false,
+            usedAt: new Date()
+          });
+          
+          setPassData(prev => prev ? { ...prev, active: false } : null);
+          setHasScanned(true);
+          setScanError(null);
+        } else {
+          setScanError('Pass not found or already used');
+        }
       } else {
         setScanError('Invalid QR code for this pass');
       }
@@ -112,6 +139,11 @@ export default function PassValidationPage() {
 
   const handleError = (err: Error) => {
     setScanError(err.message);
+  };
+
+  const handleReset = () => {
+    setScanError(null);
+    setHasScanned(false);
   };
 
   if (loading) {
@@ -131,24 +163,38 @@ export default function PassValidationPage() {
           <p className="mb-4">Please scan the store's QR code to validate your pass</p>
           <QRScanner onScan={handleScan} onError={handleError} />
           {scanError && (
-            <div className="mt-4 p-4 bg-red-50 text-red-700 rounded">
-              {scanError}
+            <div className="mt-4">
+              <div className="p-4 bg-red-50 text-red-700 rounded mb-4">
+                {scanError}
+              </div>
+              <button
+                onClick={handleReset}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+              >
+                Try Again
+              </button>
             </div>
           )}
         </div>
       ) : (
-        <ScanResult
-          isValid={!!passData?.active && new Date() < passData.expiresAt}
-          message={
-            !passData 
-              ? 'Pass not found'
-              : !passData.active 
-                ? 'Invalid store or pass'
-                : new Date() < passData.expiresAt 
-                  ? 'Pass is valid' 
-                  : 'Pass has expired'
-          }
-        />
+        <div>
+          <ScanResult
+            isValid={hasScanned && !scanError}
+            message={
+              scanError 
+                ? scanError
+                : !passData 
+                  ? 'Pass not found'
+                  : hasScanned && !scanError
+                    ? 'Pass successfully scanned and validated!'
+                    : new Date() < passData.expiresAt 
+                      ? 'Please scan the store QR code to validate your pass' 
+                      : 'Pass has expired'
+            }
+            partySize={passData?.partySize}
+            showUsedWarning={hasScanned && !scanError}
+          />
+        </div>
       )}
     </div>
   );
