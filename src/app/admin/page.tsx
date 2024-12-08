@@ -39,6 +39,13 @@ export default function AdminDashboard() {
     maxPasses: 25,
     image: null as File | null
   });
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    storeId: string | null;
+  }>({
+    isOpen: false,
+    storeId: null
+  });
 
   // Function to load existing stores
   const loadStores = async () => {
@@ -165,6 +172,24 @@ export default function AdminDashboard() {
     }
 
     return true;
+  };
+
+  const handleDeleteClick = (storeId: string) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      storeId
+    });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmation.storeId) return;
+    
+    try {
+      await deleteStore(deleteConfirmation.storeId);
+      setDeleteConfirmation({ isOpen: false, storeId: null });
+    } catch (err) {
+      setError('Failed to delete store');
+    }
   };
 
   if (loading) {
@@ -322,7 +347,7 @@ export default function AdminDashboard() {
                     {store.storeUrl}
                   </p>
                   <button
-                    onClick={() => deleteStore(store.id)}
+                    onClick={() => handleDeleteClick(store.id)}
                     className="w-full px-4 py-2.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                   >
                     Delete Store
@@ -333,6 +358,29 @@ export default function AdminDashboard() {
           ))}
         </div>
       </div>
+
+      {deleteConfirmation.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4">Confirm Delete</h2>
+            <p className="mb-6">Are you sure you want to delete this store? This action cannot be undone.</p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setDeleteConfirmation({ isOpen: false, storeId: null })}
+                className="btn btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="btn btn-primary bg-red-500 hover:bg-red-600"
+              >
+                Delete Store
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
