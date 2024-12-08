@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { db } from '@/utils/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import PaymentForm from '@/components/payment/PaymentForm';
 
 interface StoreData {
@@ -17,6 +17,12 @@ interface StoreData {
   // Add any other fields you need
 }
 
+interface DailyPassesData {
+  date: string;
+  totalPasses: number;
+  remainingPasses: number;
+}
+
 export default function StorefrontPage() {
   const params = useParams();
   const [storeData, setStoreData] = useState<StoreData | null>(null);
@@ -28,7 +34,7 @@ export default function StorefrontPage() {
   useEffect(() => {
     const fetchStoreData = async () => {
       try {
-        // Fetch store data
+        // 1. Fetch store data
         const storeQuery = query(
           collection(db, 'stores'),
           where('storeId', '==', params.storeId),
@@ -49,19 +55,23 @@ export default function StorefrontPage() {
             maxPasses: data.maxPasses
           });
 
-          // Fetch sold passes count
-          const passesQuery = query(
-            collection(db, 'passes'),
-            where('storeId', '==', params.storeId),
-            where('date', '==', new Date().toISOString().split('T')[0]) // Today's date in YYYY-MM-DD format
-          );
+          // 2. Get or create today's passes document
+          const today = new Date().toISOString().split('T')[0];
+          const dailyPassesRef = doc(db, 'stores', storeSnapshot.docs[0].id, 'dailyPasses', today);
+          const dailyPassesDoc = await getDoc(dailyPassesRef);
 
-          const passesSnapshot = await getDocs(passesQuery);
-          const soldPasses = passesSnapshot.docs.reduce((total, doc) => 
-            total + (doc.data().quantity || 1), 0
-          );
-
-          setAvailablePasses(data.maxPasses - soldPasses);
+          if (!dailyPassesDoc.exists()) {
+            // Create new daily passes document if it doesn't exist
+            await setDoc(dailyPassesRef, {
+              date: today,
+              totalPasses: data.maxPasses,
+              remainingPasses: data.maxPasses
+            });
+            setAvailablePasses(data.maxPasses);
+          } else {
+            // Use existing daily passes count
+            setAvailablePasses(dailyPassesDoc.data().remainingPasses);
+          }
         } else {
           setError('Store not found or inactive');
         }

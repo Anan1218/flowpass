@@ -8,9 +8,11 @@ import { addDoc, collection } from 'firebase/firestore';
 
 interface PaymentFormProps {
   storeId: string;
+  quantity: number;
+  price: number;
 }
 
-const PaymentForm = ({ storeId }: PaymentFormProps) => {
+const PaymentForm = ({ storeId, quantity }: PaymentFormProps) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,16 +36,17 @@ const PaymentForm = ({ storeId }: PaymentFormProps) => {
       
       // Create a new pass document with the generated passId
       const passRef = await addDoc(collection(db, 'passes'), {
-        passId: generatedPassId,  // Store this exact ID
+        passId: generatedPassId,
         active: true,
         userId: formData.email,
         storeId: storeId,
+        quantity: quantity,
         createdAt: new Date(),
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       });
 
       // Redirect using the generated passId, not the document ID
-      router.push(`/pass/${generatedPassId}`);
+      router.push(`/order-confirmation/${generatedPassId}`);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
