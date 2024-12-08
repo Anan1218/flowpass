@@ -7,7 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
   try {
-    const { paymentIntentId, storeId } = await req.json();
+    const { paymentIntentId, storeId, phoneNumber, quantity } = await req.json();
     
     // Verify the payment intent is successful
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
@@ -26,14 +26,17 @@ export async function POST(req: Request) {
     expiresAt.setDate(expiresAt.getDate() + 1);
     expiresAt.setHours(8, 0, 0, 0);
     
+    // Create a single pass document with all fields
     await setDoc(doc(db, 'passes', passId), {
       passId,
       storeId,
       paymentIntentId,
+      phoneNumber,
+      quantity,
       active: true,
-      quantity: 1,
       createdAt: now,
       expiresAt: expiresAt,
+      used: false
     });
 
     return NextResponse.json({ passId });

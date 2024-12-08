@@ -28,28 +28,30 @@ const PaymentForm = ({ storeId, quantity, price, phoneNumber, disabled, onSucces
 
   // Only fetch payment intent if phone number is valid
   useEffect(() => {
-    const fetchPaymentIntent = async () => {
-      if (disabled) return; // Don't fetch if phone number is invalid
-
+    const createPaymentIntent = async () => {
       try {
         const response = await fetch('/api/stripe', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             storeId,
-            quantity,
-            amount: price * quantity 
+            amount: price * quantity * 100, // Convert to cents and multiply by quantity
           }),
         });
+
         const data = await response.json();
         setClientSecret(data.clientSecret);
-      } catch (error) {
-        console.error('Error fetching payment intent:', error);
+      } catch (err) {
+        console.error('Error creating payment intent:', err);
       }
     };
 
-    fetchPaymentIntent();
-  }, [storeId, quantity, price, disabled]);
+    if (storeId && price && quantity) {
+      createPaymentIntent();
+    }
+  }, [storeId, price, quantity]); // Add quantity to dependency array
 
   if (disabled) {
     return (
@@ -81,6 +83,7 @@ const PaymentForm = ({ storeId, quantity, price, phoneNumber, disabled, onSucces
       <CheckoutForm 
         storeId={storeId} 
         quantity={quantity} 
+        price={price}
         phoneNumber={phoneNumber}
         disabled={disabled}
         onSuccess={onSuccess}
@@ -93,12 +96,14 @@ const PaymentForm = ({ storeId, quantity, price, phoneNumber, disabled, onSucces
 const CheckoutForm = ({ 
   storeId, 
   quantity, 
+  price,
   phoneNumber,
   disabled,
   onSuccess 
 }: { 
   storeId: string; 
   quantity: number;
+  price: number;
   phoneNumber: string;
   disabled: boolean;
   onSuccess?: () => void;
@@ -129,28 +134,22 @@ const CheckoutForm = ({
       }
 
       if (result.paymentIntent?.status === 'succeeded') {
-        const response = await fetch(`/api/stripe?paymentIntentId=${result.paymentIntent.id}`, {
-          method: 'GET'
+        // Create the pass with all necessary data
+        const passResponse = await fetch('/api/passes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            paymentIntentId: result.paymentIntent.id,
+            storeId,
+            phoneNumber,
+            quantity
+          }),
         });
         
-        const data = await response.json();
-        if (data.passId) {
-          // Include phone number in the passes API call
-          const passResponse = await fetch('/api/passes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              paymentIntentId: result.paymentIntent.id,
-              storeId,
-              phoneNumber // Add phone number to the request
-            }),
-          });
-          
-          const passData = await passResponse.json();
-          if (passData.passId) {
-            onSuccess?.(); // Call onSuccess callback if provided
-            router.push(`/order-confirmation/${passData.passId}`);
-          }
+        const passData = await passResponse.json();
+        if (passData.passId) {
+          onSuccess?.(); // Call onSuccess callback if provided
+          router.push(`/order-confirmation/${passData.passId}?quantity=${quantity}`);
         }
       }
     } catch (err) {
@@ -184,13 +183,14 @@ const CheckoutForm = ({
           disabled={loading}
           className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
         >
-          {loading && (
+          {loading ? (
             <svg className="animate-spin -ml-1 mr-3 h-5 w-5 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
+          ) : (
+            `Pay $${(price * quantity).toFixed(2)}`
           )}
-          Pay with Stripe
         </button>
       </form>
     </div>

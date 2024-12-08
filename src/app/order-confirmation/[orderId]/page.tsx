@@ -8,27 +8,26 @@ import { db } from '@utils/firebase';
 interface OrderData {
   passId: string;
   quantity: number;
+  active: boolean;
+  storeId: string;
 }
 
 export default function OrderConfirmationPage() {
   const params = useParams();
   const router = useRouter();
   const [orderData, setOrderData] = useState<OrderData | null>(null);
-  const [passId, setPassId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPassData = async () => {
-      const searchParams = new URLSearchParams(window.location.search);
-      const quantity = parseInt(searchParams.get('quantity') || '1', 10);
-      
       try {
         const passDoc = await getDoc(doc(db, 'passes', params.orderId as string));
         if (passDoc.exists()) {
           const passData = passDoc.data();
-          setPassId(passData.passId);
           setOrderData({
             passId: passData.passId,
-            quantity: quantity
+            quantity: passData.quantity,
+            active: passData.active,
+            storeId: passData.storeId
           });
         }
       } catch (error) {
@@ -42,8 +41,8 @@ export default function OrderConfirmationPage() {
   }, [params.orderId]);
 
   const handleScanNow = () => {
-    if (passId) {
-      router.push(`/pass/${passId}`);
+    if (orderData?.passId) {
+      router.push(`/pass/${orderData.passId}`);
     }
   };
 
@@ -55,9 +54,9 @@ export default function OrderConfirmationPage() {
       <div className="mb-8">
         <h2 className="text-lg font-medium mb-2">Valid For:</h2>
         <div className="text-6xl font-bold text-green-500 mb-2">
-          {orderData?.quantity || 1}
+          {orderData?.quantity || '-'}
         </div>
-        <div className="text-xl">Guest{(orderData?.quantity || 1) > 1 ? 's' : ''}</div>
+        <div className="text-xl">Guest{(orderData?.quantity || 0) > 1 ? 's' : ''}</div>
       </div>
 
       <p className="text-sm text-gray-600 mb-8">

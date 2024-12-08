@@ -112,27 +112,11 @@ export default function StorefrontPage() {
 
   const updateAvailablePasses = async (purchasedQuantity: number) => {
     try {
-      // Create passes documents
-      const passesCollection = collection(db, 'passes');
-      const now = new Date();
-      
-      // Create multiple pass documents based on quantity
-      const passPromises = Array(purchasedQuantity).fill(null).map(() => {
-        const passData: Pass = {
-          storeId: params.storeId as string,
-          phoneNumber: phoneNumber,
-          quantity: 1,
-          createdAt: now,
-          used: false
-        };
-        return addDoc(passesCollection, passData);
-      });
-
-      const passRefs = await Promise.all(passPromises);
-      const firstPassId = passRefs[0].id; // Get the ID of the first pass
+      // Get the passId from the payment success response
+      const passId = await onSuccess(); // We'll need to modify PaymentForm to return this
 
       // Construct the URL for the order confirmation page
-      let passUrl = `${window.location.origin}/order-confirmation/${firstPassId}?quantity=${purchasedQuantity}`;
+      let passUrl = `${window.location.origin}/order-confirmation/${passId}?quantity=${purchasedQuantity}`;
       let smsMessage = `Thank you for purchasing ${purchasedQuantity} pass${purchasedQuantity > 1 ? 'es' : ''} at ${storeData?.name}. Access your pass here: ${passUrl}`;
     
       // Send SMS notification
@@ -153,8 +137,8 @@ export default function StorefrontPage() {
 
       setAvailablePasses(prev => prev - purchasedQuantity);
     } catch (error) {
-      console.error('Error updating passes:', error);
-      throw new Error('Failed to update passes and send notification');
+      console.error('Error sending notification:', error);
+      throw new Error('Failed to send notification');
     }
   };
 
