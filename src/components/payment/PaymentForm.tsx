@@ -19,7 +19,7 @@ interface PaymentFormProps {
   price: number;
   phoneNumber: string;
   disabled: boolean;
-  onSuccess?: () => void;
+  onSuccess?: (passId: string) => void;
 }
 
 // Wrapper component to provide Stripe context
@@ -106,7 +106,7 @@ const CheckoutForm = ({
   price: number;
   phoneNumber: string;
   disabled: boolean;
-  onSuccess?: () => void;
+  onSuccess?: (passId: string) => void;
 }) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -148,7 +148,7 @@ const CheckoutForm = ({
         
         const passData = await passResponse.json();
         if (passData.passId) {
-          onSuccess?.(); // Call onSuccess callback if provided
+          onSuccess?.(passData.passId); // Call onSuccess callback if provided
           router.push(`/order-confirmation/${passData.passId}?quantity=${quantity}`);
         }
       }
