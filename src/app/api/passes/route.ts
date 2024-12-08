@@ -20,14 +20,20 @@ export async function POST(req: Request) {
 
     const passId = paymentIntent.metadata.passId;
     
+    // Calculate expiration time (8 AM next day)
+    const now = new Date();
+    const expiresAt = new Date(now);
+    expiresAt.setDate(expiresAt.getDate() + 1);
+    expiresAt.setHours(8, 0, 0, 0);
+    
     await setDoc(doc(db, 'passes', passId), {
       passId,
       storeId,
       paymentIntentId,
       active: true,
       quantity: 1,
-      createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+      createdAt: now,
+      expiresAt: expiresAt,
     });
 
     return NextResponse.json({ passId });

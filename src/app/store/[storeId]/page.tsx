@@ -55,23 +55,26 @@ export default function StorefrontPage() {
             maxPasses: data.maxPasses
           });
 
-          // 2. Get or create today's passes document
-          const today = new Date().toISOString().split('T')[0];
-          const dailyPassesRef = doc(db, 'stores', storeSnapshot.docs[0].id, 'dailyPasses', today);
-          const dailyPassesDoc = await getDoc(dailyPassesRef);
-
-          if (!dailyPassesDoc.exists()) {
-            // Create new daily passes document if it doesn't exist
-            await setDoc(dailyPassesRef, {
-              date: today,
-              totalPasses: data.maxPasses,
-              remainingPasses: data.maxPasses
-            });
-            setAvailablePasses(data.maxPasses);
-          } else {
-            // Use existing daily passes count
-            setAvailablePasses(dailyPassesDoc.data().remainingPasses);
+          // Calculate today's 8 AM
+          const now = new Date();
+          const today8am = new Date(now);
+          today8am.setHours(8, 0, 0, 0);
+          
+          // If current time is before 8 AM, use previous day's 8 AM
+          if (now < today8am) {
+            today8am.setDate(today8am.getDate() - 1);
           }
+
+          // Get passes since last 8 AM
+          const passesQuery = query(
+            collection(db, 'passes'),
+            where('storeId', '==', params.storeId),
+            where('createdAt', '>=', today8am)
+          );
+
+          const passesSnapshot = await getDocs(passesQuery);
+          const usedPasses = passesSnapshot.docs.length;
+          setAvailablePasses(data.maxPasses - usedPasses);
         } else {
           setError('Store not found or inactive');
         }

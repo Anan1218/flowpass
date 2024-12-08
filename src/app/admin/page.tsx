@@ -220,33 +220,51 @@ export default function AdminDashboard() {
   // Update the function to load store statistics
   const loadStoreStats = async (store: Store) => {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      // Get today's date at 8 AM
+      const now = new Date();
+      const today8am = new Date(now);
+      today8am.setHours(8, 0, 0, 0);
       
-      // Get recent passes using only storeId
+      // If current time is before 8 AM, use previous day's 8 AM
+      if (now < today8am) {
+        today8am.setDate(today8am.getDate() - 1);
+      }
+      
+      // Get recent passes
       const passesQuery = query(
+        collection(db, 'passes'),
+        where('storeId', '==', store.storeId),
+        where('createdAt', '>=', today8am),
+        orderBy('createdAt', 'desc')
+      );
+
+      const passesSnapshot = await getDocs(passesQuery);
+      const todaysPasses = passesSnapshot.docs.length;
+      
+      // Get recent passes for history
+      const recentPassesQuery = query(
         collection(db, 'passes'),
         where('storeId', '==', store.storeId),
         orderBy('createdAt', 'desc'),
         limit(5)
       );
 
-      const passesSnapshot = await getDocs(passesQuery);
-      
+      const recentPassesSnapshot = await getDocs(recentPassesQuery);
+
       setStoreStats(prev => ({
         ...prev,
         [store.storeId]: {
-          dailyPasses: null, // We'll handle daily passes differently if needed
-          recentPasses: passesSnapshot.docs.map(doc => ({
+          dailyPasses: {
+            remainingPasses: store.maxPasses - todaysPasses,
+            date: today8am.toISOString()
+          },
+          recentPasses: recentPassesSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
           })) as Pass[]
         }
       }));
 
-      // Add console logs for debugging
-      console.log(`Stats for store ${store.storeId}:`, {
-        recentPasses: passesSnapshot.docs.map(doc => doc.data())
-      });
     } catch (error) {
       console.error('Error loading store stats:', error);
     }
