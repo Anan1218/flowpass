@@ -19,20 +19,6 @@ interface StoreData {
   // Add any other fields you need
 }
 
-interface DailyPassesData {
-  date: string;
-  totalPasses: number;
-  remainingPasses: number;
-}
-
-interface Pass {
-  storeId: string;
-  phoneNumber: string;
-  quantity: number;
-  createdAt: Date;
-  used: boolean;
-}
-
 export default function StorefrontPage() {
   const params = useParams();
   const [storeData, setStoreData] = useState<StoreData | null>(null);

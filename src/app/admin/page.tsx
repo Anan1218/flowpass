@@ -55,7 +55,6 @@ export default function AdminDashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
   const [stores, setStores] = useState<Store[]>([]);
-  const [newQRCode, setNewQRCode] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newStore, setNewStore] = useState({
     name: '',
@@ -138,7 +137,6 @@ export default function AdminDashboard() {
         maxPasses: Number(newStore.maxPasses)
       });
 
-      setNewQRCode(storeUrl);
       await loadStores();
       setIsModalOpen(false);
       setNewStore({

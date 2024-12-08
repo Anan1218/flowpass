@@ -20,7 +20,6 @@ export default function PassValidationPage() {
   const params = useParams();
   const [passData, setPassData] = useState<PassData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [hasScanned, setHasScanned] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
 
