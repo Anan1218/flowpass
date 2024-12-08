@@ -26,9 +26,29 @@ export default function OrderConfirmationPage() {
       if (!passSnapshot.empty) {
         const data = passSnapshot.docs[0].data();
         setOrderData({
-          passId: data.passId,
+          passId: params.orderId as string,
           quantity: data.quantity || 1,
         });
+      } else {
+        try {
+          const response = await fetch('/api/stripe/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              paymentIntentId: params.orderId 
+            }),
+          });
+          
+          const data = await response.json();
+          if (data.passId) {
+            setOrderData({
+              passId: data.passId,
+              quantity: data.quantity || 1,
+            });
+          }
+        } catch (err) {
+          console.error('Error confirming payment:', err);
+        }
       }
     };
 
@@ -38,6 +58,7 @@ export default function OrderConfirmationPage() {
   }, [params.orderId]);
 
   const handleScanNow = () => {
+    console.log('orderData', orderData);
     if (orderData?.passId) {
       router.push(`/pass/${orderData.passId}`);
     }

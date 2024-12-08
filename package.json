@@ -17,7 +17,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-qr-code": "^2.0.15",
-    "react-qr-reader-es6": "^2.2.1-2"
+    "react-qr-reader-es6": "^2.2.1-2",
+    "stripe": "^17.4.0"
   },
   "devDependencies": {
     "@types/node": "^20",

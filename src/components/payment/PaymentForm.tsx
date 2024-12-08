@@ -1,108 +1,119 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { nanoid } from 'nanoid';
-import { db } from '@/utils/firebase';
-import { addDoc, collection } from 'firebase/firestore';
+import { loadStripe } from '@stripe/stripe-js';
+import {
+  Elements,
+  PaymentElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js';
+
+// Initialize Stripe (replace with your publishable key)
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface PaymentFormProps {
   storeId: string;
-  quantity: number;
-  price: number;
 }
 
-const PaymentForm = ({ storeId, quantity }: PaymentFormProps) => {
+// Wrapper component to provide Stripe context
+const PaymentForm = ({ storeId }: PaymentFormProps) => {
+  const [clientSecret, setClientSecret] = useState<string>();
+
+  // Fetch payment intent when component mounts
+  useEffect(() => {
+    const fetchPaymentIntent = async () => {
+      try {
+        const response = await fetch('/api/stripe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ storeId }),
+        });
+        const data = await response.json();
+        setClientSecret(data.clientSecret);
+      } catch (error) {
+        console.error('Error fetching payment intent:', error);
+      }
+    };
+
+    fetchPaymentIntent();
+  }, [storeId]);
+
+  if (!clientSecret) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <Elements 
+      stripe={stripePromise} 
+      options={{
+        clientSecret,
+        appearance: {
+          theme: 'stripe',
+          variables: {
+            colorPrimary: '#0066cc',
+          },
+        },
+      }}
+    >
+      <CheckoutForm storeId={storeId} />
+    </Elements>
+  );
+};
+
+// Internal checkout form component
+const CheckoutForm = ({ storeId }: { storeId: string }) => {
+  const stripe = useStripe();
+  const elements = useElements();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    email: '',
-    name: '',
-    customUrl: '',
-  });
-
-  const generateCustomUrl = () => {
-    return nanoid(10); // Generates a 10-character ID
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!stripe || !elements) return;
+
     setLoading(true);
     setError(null);
 
     try {
-      const generatedPassId = generateCustomUrl(); // Generate the ID first
-      
-      // Create a new pass document with the generated passId
-      const passRef = await addDoc(collection(db, 'passes'), {
-        passId: generatedPassId,
-        active: true,
-        userId: formData.email,
-        storeId: storeId,
-        quantity: quantity,
-        createdAt: new Date(),
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      const result = await stripe.confirmPayment({
+        elements,
+        redirect: 'if_required',
       });
 
-      // Redirect using the generated passId, not the document ID
-      router.push(`/order-confirmation/${generatedPassId}`);
+      if (result.error) {
+        setError(result.error.message ?? 'An error occurred');
+        setLoading(false);
+        return;
+      }
 
+      // Check if payment is successful and get the passId
+      if (result.paymentIntent?.status === 'succeeded') {
+        const response = await fetch('/api/stripe/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            paymentIntentId: result.paymentIntent.id 
+          }),
+        });
+        
+        const data = await response.json();
+        if (data.passId) {
+          router.push(`/order-confirmation/${data.passId}`);
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
       setLoading(false);
     }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
   };
 
   return (
     <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow">
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <label 
-            htmlFor="email" 
-            className="block text-sm font-medium text-gray-700"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            placeholder="Enter your email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label 
-            htmlFor="name" 
-            className="block text-sm font-medium text-gray-700"
-          >
-            Name
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            required
-            placeholder="Enter your name"
-            value={formData.name}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+        <PaymentElement />
         {error && (
           <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
             {error}
