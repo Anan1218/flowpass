@@ -399,7 +399,7 @@ export default function AdminDashboard() {
         <h2 className="text-xl font-bold mb-4">Your Stores</h2>
         <div className="space-y-6">
           {stores.map((store) => (
-            <div key={store.id} className="border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
+            <div key={store.storeId} className="border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
               <div className="p-6">
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Store Info Section */}
