@@ -193,7 +193,7 @@ export default function StorefrontPage() {
 
       <div className="mb-8">
         <h3 className="text-center text-xl mb-4">Select Quantity</h3>
-        <p className="text-center text-gray-600 mb-4">How many Fast Passes would you like?</p>
+        <p className="text-center text-gray-600 mb-4">How many Scan Passes would you like?</p>
         <div className="flex items-center justify-center gap-4">
           <button 
             onClick={() => handleQuantityChange(-1)}
