@@ -4,7 +4,7 @@ import { AuthContextProvider } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar/Navbar';
 
 export const metadata: Metadata = {
-  title: "FlowPass",
+  title: "ScanPass",
   description: "QR Code Validation System",
 };
 
