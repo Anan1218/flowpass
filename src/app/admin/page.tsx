@@ -454,6 +454,17 @@ export default function AdminDashboard() {
                     <p className="text-sm text-gray-900 break-all text-center mt-2">
                       {store.storeUrl}
                     </p>
+
+                    {/* Add Visit Store Button */}
+                    <div className="mt-2 text-center">
+                      <Link 
+                        href={store.storeUrl}
+                        target="_blank"
+                        className="inline-flex items-center text-blue-600 hover:text-blue-700"
+                      >
+                        Visit Store →
+                      </Link>
+                    </div>
                   </div>
 
                   {/* Stats Section */}
