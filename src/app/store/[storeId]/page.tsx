@@ -186,8 +186,8 @@ export default function StorefrontPage() {
         <h2 className="text-2xl font-bold">Only {availablePasses} left at</h2>
         <div className="text-4xl font-bold text-green-500 my-2">${storeData.price}</div>
         <p className="text-gray-600 text-sm flex items-center justify-center gap-2">
-          <span className="text-yellow-500">⚡</span>
-          {storeData.maxPasses} passes available daily
+          <span className="text-yellow-500">✨</span>
+          Total {storeData.maxPasses} passes available today
         </p>
       </div>
 
@@ -220,7 +220,7 @@ export default function StorefrontPage() {
           defaultCountry="US"
           value={phoneNumber}
           onChange={handlePhoneChange}
-          className="w-full p-3 border rounded-lg"
+          className="w-full p-3 border rounded-lg [&_.PhoneInputInput]:text-black"
         />
       </div>
 
