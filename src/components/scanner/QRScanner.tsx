@@ -13,6 +13,7 @@ interface QRScannerProps {
 
 export default function QRScanner({ onScan, onError }: QRScannerProps) {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [lastScan, setLastScan] = useState<number>(0);
 
   useEffect(() => {
     // Check for camera permissions
@@ -21,6 +22,15 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
       .then(() => setHasPermission(true))
       .catch(() => setHasPermission(false));
   }, []);
+
+  const handleScan = (data: string | null) => {
+    // Debounce scans by ignoring readings within 2 seconds of the last successful scan
+    const now = Date.now();
+    if (data && now - lastScan > 2000) {
+      setLastScan(now);
+      onScan(data);
+    }
+  };
 
   if (hasPermission === null) {
     return <div>Requesting camera permission...</div>;
@@ -34,9 +44,9 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
     <div className="max-w-md mx-auto">
       <div className="relative aspect-square">
         <QrReader
-          delay={300}
+          delay={500}
           onError={onError}
-          onScan={onScan}
+          onScan={handleScan}
           style={{ width: '100%' }}
         />
         <div className="absolute inset-0 border-2 border-blue-500 pointer-events-none" />
