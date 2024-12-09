@@ -148,8 +148,7 @@ const CheckoutForm = ({
         
         const passData = await passResponse.json();
         if (passData.passId) {
-          onSuccess?.(passData.passId); // Call onSuccess callback if provided
-          router.push(`/order-confirmation/${passData.passId}?quantity=${quantity}`);
+          onSuccess?.(passData.passId); // Only call the callback
         }
       }
     } catch (err) {
