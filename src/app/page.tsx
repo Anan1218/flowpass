@@ -1,23 +1,31 @@
-import Navbar from '@/components/Navbar/Navbar';
-import { AuthContextProvider } from '@/contexts/AuthContext';
+import { Container } from "../components/Container";
+import { Hero } from "../components/homepage/Hero";
+import { SectionTitle } from "../components/homepage/SectionTitle";
+import { Video } from "../components/homepage/Video";
+import { Faq } from "../components/homepage/Faq";
+import Navbar from "../components/Navbar/Navbar";
 
 export default function Home() {
   return (
-    <AuthContextProvider>
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl font-bold text-center mb-8">
-              Welcome to ScanPass
-            </h1>
-            <p className="text-center mb-4">
-              The easiest way to manage and validate passes for your business.
-            </p>
-            {/* Add more landing page content here */}
-          </div>
-        </main>
-      </div>
-    </AuthContextProvider>
+    <>
+      <Navbar />
+      <Container>
+        <Hero />
+        <SectionTitle
+          preTitle="WATCH SCANPASS IN ACTION"
+          title="See How Easy It Is"
+        >
+          Check out our demo video to see how you can create stunning voice clips in just a few clicks.
+        </SectionTitle>
+        <Video />
+        <SectionTitle 
+          preTitle="FAQ" 
+          title="Got Questions?"
+        >
+          Learn more about how ScanPass works and how you can get the most out of it.
+        </SectionTitle>
+        <Faq />
+      </Container>
+    </>
   );
 }
