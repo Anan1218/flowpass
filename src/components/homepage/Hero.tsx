@@ -8,15 +8,15 @@ export function Hero() {
           ScanPass
         </h1>
         <p className="text-xl text-gray-300">
-          Bring your words to life with AI-generated celebrity videos! Just submit your prompt and receive{' '}
-          <span className="text-indigo-400">voice cloned</span> +{' '}
-          <span className="text-indigo-400">lipsynced</span> videos.
+          Skip the lines and maximize your experience! Get instant access to your favorite attractions with{' '}
+          <span className="text-indigo-400">digital reservations</span> and{' '}
+          <span className="text-indigo-400">real-time availability</span>.
         </p>
         <Link 
           href="/signin" 
           className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-medium"
         >
-          Get Started Now
+          Reserve Now
         </Link>
       </div>
       
@@ -25,7 +25,7 @@ export function Hero() {
           <div className="aspect-video bg-gray-800 rounded-lg">
             {/* Add your video player here */}
           </div>
-          <p className="text-sm text-center mt-2">Turn Sound On!</p>
+          <p className="text-sm text-center mt-2">See how it works!</p>
         </div>
       </div>
     </div>
