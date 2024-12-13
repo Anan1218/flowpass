@@ -1,82 +1,66 @@
+import { HiQrCode } from "react-icons/hi2"
+import { HiCalendar } from "react-icons/hi2"
+import { HiCreditCard } from "react-icons/hi2"
+import { HiUsers } from "react-icons/hi2"
 import Image from 'next/image'
 
 interface FeatureItem {
-  icon: string
+  icon: React.ReactNode
   title: string
   description: string
 }
 
 const features: FeatureItem[] = [
   {
-    icon: '/icons/scanpass.svg',
-    title: 'ScanPass',
-    description: 'Skip the line with ScanPass - your digital fast pass to instant venue entry.',
+    icon: <HiQrCode className="w-8 h-8 text-indigo-400" />,
+    title: 'FastPass',
+    description: 'Streamline entry with digital passes. Get customers in faster and track attendance in real-time.',
   },
   {
-    icon: '/icons/cover.svg',
-    title: 'Digital Payments',
-    description: 'Pay cover charges and tickets digitally through your preferred payment method.',
+    icon: <HiCalendar className="w-8 h-8 text-indigo-400" />,
+    title: 'Reservations',
+    description: 'Manage tables, sections, and VIP bookings all in one place. Never double-book again.',
   },
   {
-    icon: '/icons/drinks.svg',
-    title: 'Mobile Ordering',
-    description: 'Order and pay for drinks directly from your phone. Skip the bar line completely!',
+    icon: <HiCreditCard className="w-8 h-8 text-indigo-400" />,
+    title: 'Collect Payments',
+    description: 'Process cover charges, tickets, and reservations with integrated digital payments.',
   },
   {
-    icon: '/icons/tickets.svg',
-    title: 'Event Access',
-    description: 'Get exclusive access to events, concerts, and special venue promotions.',
-  },
-  {
-    icon: '/icons/deals.svg',
-    title: 'Member Perks',
-    description: 'Enjoy member-only drink specials and venue deals through the app.',
-  },
-  {
-    icon: '/icons/reservations.svg',
-    title: 'Table Service',
-    description: 'Reserve tables and VIP sections directly through the app.',
+    icon: <HiUsers className="w-8 h-8 text-indigo-400" />,
+    title: 'View Customers',
+    description: 'Track customer visits, preferences, and spending patterns to improve your service.',
   },
 ]
 
 export function Features() {
   return (
-    <section className="relative py-20 overflow-hidden">
+    <section className="relative py-20 bg-black">
       <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-white mb-4">See How Easy It Is</h2>
+          <p className="text-gray-400 max-w-2xl mx-auto">Seemlessly register with ScanPass and see how we can help your business.</p>
+        </div>
         
         <div className="flex justify-center">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12 max-w-3xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
             {features.map((feature, index) => (
-              <div key={index} className="flex gap-4">
-                <div className="flex-shrink-0">
-                  <Image
-                    src={feature.icon}
-                    alt={feature.title}
-                    width={48}
-                    height={48}
-                    className="bg-blue-50 rounded-lg p-2"
-                  />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-navy-900 mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600">
-                    {feature.description}
-                  </p>
+              <div key={index} className="bg-gray-900/50 backdrop-blur-sm p-6 rounded-xl border border-gray-800 hover:border-indigo-500/50 transition-all duration-300">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 bg-indigo-500/10 rounded-lg p-3">
+                    {feature.icon}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-white mb-2">
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-400 leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}
-          </div>
-
-          <div className="absolute top-1/2 -right-20 -translate-y-1/2 hidden lg:block">
-            <Image
-              src="/images/app-mockup.png"
-              alt="App Interface"
-              width={400}
-              height={800}
-              className="drop-shadow-2xl"
-            />
           </div>
         </div>
       </div>

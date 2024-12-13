@@ -12,13 +12,6 @@ export default function Home() {
       <Navbar />
       <Container>
         <Hero />
-        <SectionTitle
-          preTitle="WATCH SCANPASS IN ACTION"
-          title="See How Easy It Is"
-        >
-          Seemlessly register with ScanPass and see how we can help your business.
-        </SectionTitle>
-        {/* <Video /> */}
         <Features />
         <SectionTitle 
           preTitle="FAQ" 
