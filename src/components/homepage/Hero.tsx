@@ -8,15 +8,16 @@ export function Hero() {
           ScanPass
         </h1>
         <p className="text-xl text-gray-300">
-          Skip the lines and maximize your experience! Get instant access to your favorite attractions with{' '}
-          <span className="text-indigo-400">digital reservations</span> and{' '}
-          <span className="text-indigo-400">real-time availability</span>.
+          Setup a FastPass for your establishment. Maximize your revenue with{' '}
+          <span className="text-indigo-400">no sign up fee</span> and{' '}
+          <span className="text-indigo-400">no subscriptions</span>.
+          See how we helped make over $20,000 for our clients.
         </p>
         <Link 
           href="/signin" 
           className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-medium"
         >
-          Reserve Now
+          Join Now
         </Link>
       </div>
       

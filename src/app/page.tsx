@@ -4,6 +4,7 @@ import { SectionTitle } from "../components/homepage/SectionTitle";
 import { Video } from "../components/homepage/Video";
 import { Faq } from "../components/homepage/Faq";
 import Navbar from "../components/Navbar/Navbar";
+import { Features } from "../components/homepage/Features";
 
 export default function Home() {
   return (
@@ -15,9 +16,10 @@ export default function Home() {
           preTitle="WATCH SCANPASS IN ACTION"
           title="See How Easy It Is"
         >
-          Check out our demo video to see how you can create stunning voice clips in just a few clicks.
+          Seemlessly register with ScanPass and see how we can help your business.
         </SectionTitle>
-        <Video />
+        {/* <Video /> */}
+        <Features />
         <SectionTitle 
           preTitle="FAQ" 
           title="Got Questions?"
