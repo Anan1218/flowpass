@@ -1,7 +1,6 @@
 import { Container } from "../components/Container";
 import { Hero } from "../components/homepage/Hero";
 import { SectionTitle } from "../components/homepage/SectionTitle";
-import { Video } from "../components/homepage/Video";
 import { Faq } from "../components/homepage/Faq";
 import Navbar from "../components/Navbar/Navbar";
 import { Features } from "../components/homepage/Features";

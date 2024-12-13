@@ -2,7 +2,6 @@ import { HiQrCode } from "react-icons/hi2"
 import { HiCalendar } from "react-icons/hi2"
 import { HiCreditCard } from "react-icons/hi2"
 import { HiUsers } from "react-icons/hi2"
-import Image from 'next/image'
 
 interface FeatureItem {
   icon: React.ReactNode
