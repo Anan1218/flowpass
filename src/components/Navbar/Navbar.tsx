@@ -22,6 +22,7 @@ export default function Navbar() {
     { name: "Home", href: "/" },
     { name: "Case Studies", href: "/case-studies" },
     { name: "Pricing", href: "/pricing" },
+    { name: "Privacy Policy", href: "/privacy" },
   ];
 
   return (

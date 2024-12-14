@@ -14,7 +14,6 @@ export async function POST(request: Request) {
     console.log('Sending SMS to:', phoneNumber);
     console.log('Message:', message);
 
-    //TODO: Uncomment this when ready to send SMS
     await client.messages.create({
       body: message,
       from: twilioPhoneNumber,

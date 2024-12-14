@@ -122,8 +122,10 @@ export default function StorefrontPage() {
         }),
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Failed to send SMS');
+        throw new Error(data.error || 'Failed to send SMS');
       }
 
       // Update the available passes count
@@ -133,7 +135,8 @@ export default function StorefrontPage() {
       window.location.href = `/order-confirmation/${passId}?quantity=${quantity}`;
     } catch (error) {
       console.error('Error sending notification:', error);
-      throw new Error('Failed to send notification');
+      alert('Your payment was successful but we could not send the confirmation SMS. Please save your confirmation URL.');
+      window.location.href = `/order-confirmation/${passId}?quantity=${quantity}`;
     }
   };
 
