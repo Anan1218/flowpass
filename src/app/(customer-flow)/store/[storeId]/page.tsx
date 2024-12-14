@@ -171,60 +171,60 @@ export default function StorefrontPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto p-4">
-      <div className="mb-6">
+    <div className="max-w-md mx-auto bg-gray-900 min-h-screen text-white">
+      <div className="relative">
         <Image 
           src={storeData.imageUrl || '/default-store-image.jpg'} 
           alt={storeData.name} 
           width={800}
           height={400}
-          className="w-full h-48 object-cover rounded-lg"
+          className="w-full h-64 object-cover brightness-75"
         />
-      </div>
-
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold">Only {availablePasses} left at</h2>
-        <div className="text-4xl font-bold text-green-500 my-2">${storeData.price}</div>
-        <p className="text-gray-600 text-sm flex items-center justify-center gap-2">
-          <span className="text-yellow-500">✨</span>
-          Total {storeData.maxPasses} passes available today
-        </p>
-      </div>
-
-      <div className="mb-8">
-        <h3 className="text-center text-xl mb-4">Select Quantity</h3>
-        <p className="text-center text-gray-600 mb-4">How many Scan Passes would you like?</p>
-        <div className="flex items-center justify-center gap-4">
-          <button 
-            onClick={() => handleQuantityChange(-1)}
-            disabled={quantity <= 1}
-            className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center text-2xl disabled:opacity-50"
-          >
-            -
-          </button>
-          <span className="text-3xl font-bold">{quantity}</span>
-          <button 
-            onClick={() => handleQuantityChange(1)}
-            disabled={quantity >= availablePasses}
-            className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center text-2xl disabled:opacity-50"
-          >
-            +
-          </button>
+        <div className="absolute bottom-4 left-4">
+          <h1 className="text-3xl font-bold text-white">{storeData.name}</h1>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-white">${storeData.price}</span>
+            <span className="text-gray-300">•</span>
+            <span className="text-white">{availablePasses} passes left</span>
+          </div>
         </div>
       </div>
 
-      <div className="mb-8">
-        <h3 className="text-center text-xl mb-4">Enter Phone Number</h3>
+      <div className="p-4">
+        <div className="bg-gray-800 rounded-lg p-4">
+          <h3 className="text-xl mb-4">Select Quantity</h3>
+          <div className="flex items-center justify-between">
+            <button 
+              onClick={() => handleQuantityChange(-1)}
+              disabled={quantity <= 1}
+              className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-2xl disabled:opacity-50"
+            >
+              -
+            </button>
+            <span className="text-3xl font-bold">{quantity}</span>
+            <button 
+              onClick={() => handleQuantityChange(1)}
+              disabled={quantity >= availablePasses}
+              className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-2xl disabled:opacity-50"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gray-800 rounded-lg p-4 mb-4 mx-4">
+        <h3 className="text-xl mb-4">Phone Number</h3>
         <PhoneInput
           international
           defaultCountry="US"
           value={phoneNumber}
           onChange={handlePhoneChange}
-          className="w-full p-3 border rounded-lg [&_.PhoneInputInput]:text-black"
+          className="w-full [&_.PhoneInputInput]:bg-gray-700 [&_.PhoneInputInput]:text-white [&_.PhoneInputInput]:p-3 [&_.PhoneInputInput]:rounded-lg"
         />
       </div>
 
-      <div className="bg-white rounded-lg">
+      <div className="bg-gray-800 rounded-lg p-4">
         <PaymentForm 
           storeId={params.storeId as string} 
           quantity={quantity}

@@ -166,6 +166,12 @@ const CheckoutForm = ({
             wallets: {
               applePay: 'auto',
               googlePay: 'auto'
+            },
+            paymentMethodOrder: ['card', 'apple_pay', 'google_pay'],
+            defaultValues: {
+              billingDetails: {
+                email: '' // This helps prevent the Link prompt
+              }
             }
           }}
         />
