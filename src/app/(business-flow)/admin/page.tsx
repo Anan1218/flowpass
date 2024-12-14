@@ -327,81 +327,80 @@ export default function AdminDashboard() {
       {/* New Store Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-2xl font-bold mb-4">Create New Store</h2>
-            <form onSubmit={generateStoreQRCode}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Store Name</label>
-                  <input
-                    type="text"
-                    value={newStore.name}
-                    onChange={(e) => setNewStore(prev => ({ ...prev, name: e.target.value }))}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                    required
-                  />
-                </div>
+          <div className="max-w-2xl mx-auto bg-white rounded-lg p-6">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Create New Store</h2>
+            
+            <form onSubmit={generateStoreQRCode} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-900">Store Name</label>
+                <input
+                  type="text"
+                  value={newStore.name}
+                  onChange={(e) => setNewStore(prev => ({ ...prev, name: e.target.value }))}
+                  className="form-input"
+                  required
+                />
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Header Image</label>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        try {
-                          validateImage(file);
-                          setNewStore(prev => ({ ...prev, image: file }));
-                        } catch (err) {
-                          setError(err instanceof Error ? err.message : 'Invalid image');
-                        }
+              <div>
+                <label className="block text-sm font-medium text-gray-900">Header Image</label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      try {
+                        validateImage(file);
+                        setNewStore(prev => ({ ...prev, image: file }));
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : 'Invalid image');
                       }
-                    }}
-                    className="mt-1 block w-full"
-                  />
-                </div>
+                    }
+                  }}
+                  className="mt-1 block w-full text-gray-900"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Price per Pass ($)</label>
-                  <input
-                    type="number"
-                    value={newStore.price}
-                    onChange={(e) => setNewStore(prev => ({ ...prev, price: Number(e.target.value) }))}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                    min="0"
-                    required
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-900">Price per Pass ($)</label>
+                <input
+                  type="number"
+                  value={newStore.price}
+                  onChange={(e) => setNewStore(prev => ({ ...prev, price: Number(e.target.value) }))}
+                  className="form-input"
+                  min="0"
+                  required
+                />
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Passes per Night</label>
-                  <input
-                    type="number"
-                    value={newStore.maxPasses}
-                    onChange={(e) => setNewStore(prev => ({ ...prev, maxPasses: Number(e.target.value) }))}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                    min="1"
-                    required
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-900">Passes per Night</label>
+                <input
+                  type="number"
+                  value={newStore.maxPasses}
+                  onChange={(e) => setNewStore(prev => ({ ...prev, maxPasses: Number(e.target.value) }))}
+                  className="form-input"
+                  min="1"
+                  required
+                />
+              </div>
 
-                <div className="flex gap-2 justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="btn btn-secondary"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isGenerating}
-                    className="btn btn-primary"
-                  >
-                    {isGenerating ? 'Creating...' : 'Create Store'}
-                  </button>
-                </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isGenerating}
+                  className="btn btn-primary"
+                >
+                  {isGenerating ? 'Creating...' : 'Create Store'}
+                </button>
               </div>
             </form>
           </div>
