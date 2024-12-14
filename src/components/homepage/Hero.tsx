@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export function Hero() {
   return (
@@ -21,12 +22,16 @@ export function Hero() {
         </Link>
       </div>
       
-      <div className="flex-1">
+      <div className="flex-1 flex justify-center">
         <div className="relative rounded-lg overflow-hidden">
-          <div className="aspect-video bg-gray-800 rounded-lg">
-            {/* Add your video player here */}
-          </div>
-          <p className="text-sm text-center mt-2">See how it works!</p>
+          <Image 
+            src="/homepage/image1.png"
+            alt="Demo"
+            width={400}
+            height={800}
+            className="h-auto object-contain rounded-lg"
+            priority
+          />
         </div>
       </div>
     </div>
