@@ -1,18 +1,28 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthContext } from '@/contexts/AuthContext';
-import { collection, addDoc, query, where, orderBy, getDocs, deleteDoc, doc, limit } from 'firebase/firestore';
-import { db } from '@/utils/firebase';
-import { nanoid } from 'nanoid';
-import QRCode from 'react-qr-code';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/utils/firebase';
-import Link from 'next/link';
-import Image from 'next/image';
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthContext } from "@/contexts/AuthContext";
+import {
+  collection,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  deleteDoc,
+  doc,
+  limit,
+} from "firebase/firestore";
+import { db } from "@/utils/firebase";
+import { nanoid } from "nanoid";
+import QRCode from "react-qr-code";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "@/utils/firebase";
+import Link from "next/link";
+import Image from "next/image";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
 interface Store {
   id: string;
@@ -47,7 +57,7 @@ interface StoreStats {
     } | null;
     dailyProfit: number;
     recentPasses: Pass[];
-  }
+  };
 }
 
 export default function AdminDashboard() {
@@ -55,49 +65,85 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [stores, setStores] = useState<Store[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newStore, setNewStore] = useState({
-    name: '',
+    name: "",
     price: 20,
     maxPasses: 25,
-    image: null as File | null
+    image: null as File | null,
   });
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
     storeId: string | null;
   }>({
     isOpen: false,
-    storeId: null
+    storeId: null,
   });
+
   const [storeStats, setStoreStats] = useState<StoreStats>({});
 
   // Function to load existing stores
   const loadStores = useCallback(async () => {
     try {
       setLoading(true);
-      const storesRef = collection(db, 'stores');
+      const storesRef = collection(db, "stores");
       const q = query(
         storesRef,
-        where('userId', '==', user?.uid),
-        orderBy('createdAt', 'desc')
+        where("userId", "==", user?.uid),
+        orderBy("createdAt", "desc")
       );
-      
+
       const querySnapshot = await getDocs(q);
-      const storesData = querySnapshot.docs.map(doc => ({
+      const storesData = querySnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       })) as Store[];
-      
+
       setStores(storesData);
       setLoading(false);
     } catch (error) {
-      console.error('Error loading stores:', error);
-      setError('Failed to load stores');
+      console.error("Error loading stores:", error);
+      setError("Failed to load stores");
       setLoading(false);
     }
   }, [user?.uid]);
+
+  // Bank Account Details
+
+  const [withdrawConfirmation, setWithdrawConfirmation] = useState<{
+    isOpen: boolean;
+    storeId: string | null;
+  }>({
+    isOpen: false,
+    storeId: null,
+  });
+
+  const [addBankAccountOpen, setAddBankAccountOpen] = useState(false);
+
+  const [bankDetails, setBankDetails] = useState({
+    name: "",
+    routingNumber: "",
+    accountNumber: "",
+    accountType: "checking",
+  });
+
+  // const handleSaveBankDetails = (details) => {
+  //   console.log("Bank Details Submitted:", details);
+  //   // save bank account details to backend
+  //   setAddBankAccountOpen(false);
+  //   setBankDetails({
+  //     name: "",
+  //     routingNumber: "",
+  //     accountNumber: "",
+  //     accountType: "checking",
+  //   });
+  //   // You can add logic to send this data to your backend or Stripe API here
+  //   // setWithdrawConfirmation({ isOpen: false, storeId: null }); // Close the modal
+  // };
+
+  // const saveBankDetails = (details) => {};
 
   // Function to handle image upload
   const uploadImage = async (file: File) => {
@@ -110,50 +156,50 @@ export default function AdminDashboard() {
   const generateStoreQRCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      setError('You must be logged in to generate QR codes');
+      setError("You must be logged in to generate QR codes");
       return;
     }
 
     setIsGenerating(true);
-    setError('');
+    setError("");
 
     try {
       const storeId = nanoid();
       const storeUrl = `${BASE_URL}/store/${storeId}`;
-      
+
       // Upload image if provided
-      let imageUrl = '';
+      let imageUrl = "";
       if (newStore.image) {
         imageUrl = await uploadImage(newStore.image);
       }
-      
-      await addDoc(collection(db, 'stores'), {
+
+      await addDoc(collection(db, "stores"), {
         storeId: storeId,
         userId: user.uid,
         createdAt: new Date(),
         active: true,
-        name: newStore.name || 'My Store',
+        name: newStore.name || "My Store",
         storeUrl: storeUrl,
         imageUrl: imageUrl,
         price: Number(newStore.price),
-        maxPasses: Number(newStore.maxPasses)
+        maxPasses: Number(newStore.maxPasses),
       });
 
       await loadStores();
       setIsModalOpen(false);
       setNewStore({
-        name: '',
+        name: "",
         price: 20,
         maxPasses: 25,
-        image: null
+        image: null,
       });
     } catch (err) {
       if (err instanceof Error) {
         setError(`Failed to generate store QR code: ${err.message}`);
       } else {
-        setError('Failed to generate store QR code');
+        setError("Failed to generate store QR code");
       }
-      console.error('Generate store QR code error:', err);
+      console.error("Generate store QR code error:", err);
     } finally {
       setIsGenerating(false);
     }
@@ -162,20 +208,20 @@ export default function AdminDashboard() {
   // Function to delete a store
   const deleteStore = async (storeId: string) => {
     if (!user) return;
-    
+
     try {
-      await deleteDoc(doc(db, 'stores', storeId));
+      await deleteDoc(doc(db, "stores", storeId));
       await loadStores(); // Reload the stores after deletion
     } catch (err) {
-      console.error('Error deleting store:', err);
-      setError('Failed to delete store');
+      console.error("Error deleting store:", err);
+      setError("Failed to delete store");
     }
   };
 
   // Check authentication
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/signin');
+      router.push("/signin");
     }
   }, [user, authLoading, router]);
 
@@ -188,14 +234,14 @@ export default function AdminDashboard() {
 
   const validateImage = (file: File) => {
     const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      throw new Error('Please upload a JPG, PNG, or WebP image');
+      throw new Error("Please upload a JPG, PNG, or WebP image");
     }
 
     if (file.size > MAX_SIZE) {
-      throw new Error('Image must be less than 5MB');
+      throw new Error("Image must be less than 5MB");
     }
 
     return true;
@@ -204,18 +250,26 @@ export default function AdminDashboard() {
   const handleDeleteClick = (storeId: string) => {
     setDeleteConfirmation({
       isOpen: true,
-      storeId
+      storeId,
     });
   };
 
+  const handleWithdrawClick = (storeId: string) => {
+    setWithdrawConfirmation({ isOpen: true, storeId });
+  };
+
+  // const addBankAccountInformation = async () => {
+  //   if (!withdrawConfirmation.storeId) return;
+  // };
+
   const confirmDelete = async () => {
     if (!deleteConfirmation.storeId) return;
-    
+
     try {
       await deleteStore(deleteConfirmation.storeId);
       setDeleteConfirmation({ isOpen: false, storeId: null });
     } catch {
-      setError('Failed to delete store');
+      setError("Failed to delete store");
     }
   };
 
@@ -226,71 +280,70 @@ export default function AdminDashboard() {
       const now = new Date();
       const today8am = new Date(now);
       today8am.setHours(8, 0, 0, 0);
-      
+
       // If current time is before 8 AM, use previous day's 8 AM
       if (now < today8am) {
         today8am.setDate(today8am.getDate() - 1);
       }
-      
+
       // Get recent passes
       const passesQuery = query(
-        collection(db, 'passes'),
-        where('storeId', '==', store.storeId),
-        where('createdAt', '>=', today8am),
-        orderBy('createdAt', 'desc')
+        collection(db, "passes"),
+        where("storeId", "==", store.storeId),
+        where("createdAt", ">=", today8am),
+        orderBy("createdAt", "desc")
       );
 
       const passesSnapshot = await getDocs(passesQuery);
-      
+
       // Calculate totals
       let totalPassesUsed = 0;
       let dailyProfit = 0;
-      
-      passesSnapshot.docs.forEach(doc => {
+
+      passesSnapshot.docs.forEach((doc) => {
         const passData = doc.data();
         const quantity = passData.quantity || 1;
         totalPassesUsed += quantity;
         dailyProfit += quantity * store.price; // Calculate profit based on quantity
       });
-      
+
       // Get recent passes for history
       const recentPassesQuery = query(
-        collection(db, 'passes'),
-        where('storeId', '==', store.storeId),
-        orderBy('createdAt', 'desc'),
+        collection(db, "passes"),
+        where("storeId", "==", store.storeId),
+        orderBy("createdAt", "desc"),
         limit(5)
       );
 
       const recentPassesSnapshot = await getDocs(recentPassesQuery);
 
-      setStoreStats(prev => ({
+      setStoreStats((prev) => ({
         ...prev,
         [store.storeId]: {
           dailyPasses: {
             remainingPasses: store.maxPasses - totalPassesUsed,
-            date: today8am.toISOString()
+            date: today8am.toISOString(),
           },
           dailyProfit: dailyProfit,
-          recentPasses: recentPassesSnapshot.docs.map(doc => ({
+          recentPasses: recentPassesSnapshot.docs.map((doc) => ({
             id: doc.id,
-            ...doc.data()
-          })) as Pass[]
-        }
+            ...doc.data(),
+          })) as Pass[],
+        },
       }));
-
     } catch (error) {
-      console.error('Error loading store stats:', error);
+      console.error("Error loading store stats:", error);
     }
   };
 
   // Update the useEffect to pass the entire store object
   useEffect(() => {
     if (stores.length > 0) {
-      stores.forEach(store => loadStoreStats(store));
-      
+      stores.forEach((store) => loadStoreStats(store));
+
       // Refresh every minute
       const interval = setInterval(() => {
-        stores.forEach(store => loadStoreStats(store));
+        stores.forEach((store) => loadStoreStats(store));
       }, 60000);
 
       return () => clearInterval(interval);
@@ -308,7 +361,7 @@ export default function AdminDashboard() {
   return (
     <div className="max-w-4xl mx-auto p-4">
       <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
-      
+
       {error && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 text-red-700 mb-4">
           {error}
@@ -326,24 +379,32 @@ export default function AdminDashboard() {
 
       {/* New Store Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 text-black">
           <div className="max-w-2xl mx-auto bg-white rounded-lg p-6">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Create New Store</h2>
-            
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">
+              Create New Store
+            </h2>
+
             <form onSubmit={generateStoreQRCode} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-900">Store Name</label>
+                <label className="block text-sm font-medium text-gray-900">
+                  Store Name
+                </label>
                 <input
                   type="text"
                   value={newStore.name}
-                  onChange={(e) => setNewStore(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) =>
+                    setNewStore((prev) => ({ ...prev, name: e.target.value }))
+                  }
                   className="form-input"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900">Header Image</label>
+                <label className="block text-sm font-medium text-gray-900">
+                  Header Image
+                </label>
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
@@ -352,9 +413,11 @@ export default function AdminDashboard() {
                     if (file) {
                       try {
                         validateImage(file);
-                        setNewStore(prev => ({ ...prev, image: file }));
+                        setNewStore((prev) => ({ ...prev, image: file }));
                       } catch (err) {
-                        setError(err instanceof Error ? err.message : 'Invalid image');
+                        setError(
+                          err instanceof Error ? err.message : "Invalid image"
+                        );
                       }
                     }
                   }}
@@ -363,11 +426,18 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900">Price per Pass ($)</label>
+                <label className="block text-sm font-medium text-gray-900">
+                  Price per Pass ($)
+                </label>
                 <input
                   type="number"
                   value={newStore.price}
-                  onChange={(e) => setNewStore(prev => ({ ...prev, price: Number(e.target.value) }))}
+                  onChange={(e) =>
+                    setNewStore((prev) => ({
+                      ...prev,
+                      price: Number(e.target.value),
+                    }))
+                  }
                   className="form-input"
                   min="0"
                   required
@@ -375,11 +445,18 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900">Passes per Night</label>
+                <label className="block text-sm font-medium text-gray-900">
+                  Passes per Night
+                </label>
                 <input
                   type="number"
                   value={newStore.maxPasses}
-                  onChange={(e) => setNewStore(prev => ({ ...prev, maxPasses: Number(e.target.value) }))}
+                  onChange={(e) =>
+                    setNewStore((prev) => ({
+                      ...prev,
+                      maxPasses: Number(e.target.value),
+                    }))
+                  }
                   className="form-input"
                   min="1"
                   required
@@ -399,7 +476,7 @@ export default function AdminDashboard() {
                   disabled={isGenerating}
                   className="btn btn-primary"
                 >
-                  {isGenerating ? 'Creating...' : 'Create Store'}
+                  {isGenerating ? "Creating..." : "Create Store"}
                 </button>
               </div>
             </form>
@@ -411,7 +488,10 @@ export default function AdminDashboard() {
         <h2 className="text-xl font-bold mb-4">Your Stores</h2>
         <div className="space-y-6">
           {stores.map((store) => (
-            <div key={store.storeId} className="border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
+            <div
+              key={store.storeId}
+              className="border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow"
+            >
               <div className="p-6">
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Store Info Section */}
@@ -419,8 +499,8 @@ export default function AdminDashboard() {
                     {/* Store Header Image */}
                     {store.imageUrl && (
                       <div className="mb-4 w-full h-48 rounded-lg overflow-hidden">
-                        <Image 
-                          src={store.imageUrl} 
+                        <Image
+                          src={store.imageUrl}
                           alt={store.name}
                           width={500}
                           height={300}
@@ -431,12 +511,17 @@ export default function AdminDashboard() {
 
                     {/* Store Info */}
                     <div className="text-center mb-4">
-                      <h3 className="font-bold text-xl text-gray-900">{store.name}</h3>
+                      <h3 className="font-bold text-xl text-gray-900">
+                        {store.name}
+                      </h3>
                       <p className="text-sm text-gray-900 mt-1">
                         ${store.price} per pass • {store.maxPasses} passes/night
                       </p>
                       <p className="text-sm text-gray-700 mt-1">
-                        Created {new Date(store.createdAt.toDate()).toLocaleDateString()}
+                        Created{" "}
+                        {new Date(
+                          store.createdAt.toDate()
+                        ).toLocaleDateString()}
                       </p>
                     </div>
 
@@ -445,18 +530,18 @@ export default function AdminDashboard() {
                       <div className="w-32">
                         <QRCode
                           value={store.storeUrl}
-                          style={{ width: '100%', height: 'auto' }}
+                          style={{ width: "100%", height: "auto" }}
                         />
                       </div>
                     </div>
-                    
+
                     <p className="text-sm text-gray-900 break-all text-center mt-2">
                       {store.storeUrl}
                     </p>
 
                     {/* Add Visit Store Button */}
                     <div className="mt-2 text-center">
-                      <Link 
+                      <Link
                         href={store.storeUrl}
                         target="_blank"
                         className="inline-flex items-center text-blue-600 hover:text-blue-700"
@@ -472,35 +557,51 @@ export default function AdminDashboard() {
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       {/* Daily Passes Status */}
                       <div className="bg-gray-50 rounded-lg p-4">
-                        <h4 className="font-semibold text-black text-sm mb-2">Today's Passes</h4>
+                        <h4 className="font-semibold text-black text-sm mb-2">
+                          Today's Passes
+                        </h4>
                         {storeStats[store.storeId]?.dailyPasses ? (
                           <p className="text-center text-2xl font-bold text-black">
-                            {storeStats[store.storeId]?.dailyPasses?.remainingPasses} / {store.maxPasses} remaining
+                            {
+                              storeStats[store.storeId]?.dailyPasses
+                                ?.remainingPasses
+                            }{" "}
+                            / {store.maxPasses} remaining
                           </p>
                         ) : (
                           <p className="text-center text-black">
-                            <span className="text-2xl font-bold">{store.maxPasses} / {store.maxPasses} remaining</span>
-                            <span className="block text-sm mt-1">No passes used today</span>
+                            <span className="text-2xl font-bold">
+                              {store.maxPasses} / {store.maxPasses} remaining
+                            </span>
+                            <span className="block text-sm mt-1">
+                              No passes used today
+                            </span>
                           </p>
                         )}
                       </div>
 
                       {/* Daily Profit */}
                       <div className="bg-gray-50 rounded-lg p-4">
-                        <h4 className="font-semibold text-black text-sm mb-2">Today's Profit</h4>
+                        <h4 className="font-semibold text-black text-sm mb-2">
+                          Today's Profit
+                        </h4>
                         <p className="text-center">
                           <span className="text-2xl font-bold text-green-600">
-                            ${storeStats[store.storeId]?.dailyProfit?.toFixed(2) || '0.00'}
+                            $
+                            {storeStats[store.storeId]?.dailyProfit?.toFixed(
+                              2
+                            ) || "0.00"}
                           </span>
                         </p>
                       </div>
                     </div>
-
                     {/* Recent Passes with View All button */}
                     <div className="bg-gray-50 rounded-lg p-4">
                       <div className="flex justify-between items-center mb-4">
-                        <h4 className="font-semibold text-black text-sm">Recent Passes</h4>
-                        <Link 
+                        <h4 className="font-semibold text-black text-sm">
+                          Recent Passes
+                        </h4>
+                        <Link
                           href={`/admin/transactions/${store.storeId}`}
                           className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                         >
@@ -509,22 +610,33 @@ export default function AdminDashboard() {
                       </div>
                       {storeStats[store.storeId]?.recentPasses?.length > 0 ? (
                         <div className="space-y-2">
-                          {storeStats[store.storeId].recentPasses.map((pass) => (
-                            <div key={pass.id} className="text-sm p-3 bg-gray-50 rounded flex flex-col">
-                              <div className="flex justify-between items-center">
-                                <span className="font-medium text-black">
-                                  {pass.quantity} {pass.quantity === 1 ? 'pass' : 'passes'}
-                                </span>
-                                <span className="text-sm text-black">
-                                  {new Date(pass.createdAt.toDate()).toLocaleString()}
-                                </span>
+                          {storeStats[store.storeId].recentPasses.map(
+                            (pass) => (
+                              <div
+                                key={pass.id}
+                                className="text-sm p-3 bg-gray-50 rounded flex flex-col"
+                              >
+                                <div className="flex justify-between items-center">
+                                  <span className="font-medium text-black">
+                                    {pass.quantity}{" "}
+                                    {pass.quantity === 1 ? "pass" : "passes"}
+                                  </span>
+                                  <span className="text-sm text-black">
+                                    {new Date(
+                                      pass.createdAt.toDate()
+                                    ).toLocaleString()}
+                                  </span>
+                                </div>
+                                <div className="text-sm text-black mt-1">
+                                  Status: {pass.active ? "Active" : "Used"}
+                                  {pass.usedAt &&
+                                    ` at ${new Date(
+                                      pass.usedAt.toDate()
+                                    ).toLocaleString()}`}
+                                </div>
                               </div>
-                              <div className="text-sm text-black mt-1">
-                                Status: {pass.active ? 'Active' : 'Used'}
-                                {pass.usedAt && ` at ${new Date(pass.usedAt.toDate()).toLocaleString()}`}
-                              </div>
-                            </div>
-                          ))}
+                            )
+                          )}
                         </div>
                       ) : (
                         <p className="text-center py-4 text-sm text-black bg-gray-50 rounded">
@@ -534,6 +646,14 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Delete Button */}
+                    <div className="mt-4">
+                      <button
+                        onClick={() => handleWithdrawClick(store.id)}
+                        className="w-full px-4 py-2.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                      >
+                        Withdraw
+                      </button>
+                    </div>
                     <div className="mt-4">
                       <button
                         onClick={() => handleDeleteClick(store.id)}
@@ -551,13 +671,18 @@ export default function AdminDashboard() {
       </div>
 
       {deleteConfirmation.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 text-black">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h2 className="text-2xl font-bold mb-4">Confirm Delete</h2>
-            <p className="mb-6">Are you sure you want to delete this store? This action cannot be undone.</p>
+            <p className="mb-6">
+              Are you sure you want to delete this store? This action cannot be
+              undone.
+            </p>
             <div className="flex gap-2 justify-end">
               <button
-                onClick={() => setDeleteConfirmation({ isOpen: false, storeId: null })}
+                onClick={() =>
+                  setDeleteConfirmation({ isOpen: false, storeId: null })
+                }
                 className="btn btn-secondary"
               >
                 Cancel
@@ -572,6 +697,139 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+      {withdrawConfirmation.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 text-black">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg">
+            <h2 className="text-2xl font-bold mb-4">Bank Transfer</h2>
+
+            {addBankAccountOpen ? (
+              <form
+                className="space-y-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  // handleSaveBankDetails(bankDetails);
+                }}
+              >
+                <div>
+                  <label
+                    htmlFor="account-holder-name"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Account Holder Name
+                  </label>
+                  <input
+                    id="account-holder-name"
+                    type="text"
+                    placeholder="John Doe"
+                    value={bankDetails.name}
+                    onChange={(e) =>
+                      setBankDetails({ ...bankDetails, name: e.target.value })
+                    }
+                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="routing-number"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Routing Number
+                  </label>
+                  <input
+                    id="routing-number"
+                    type="text"
+                    placeholder="123456789"
+                    value={bankDetails.routingNumber}
+                    onChange={(e) =>
+                      setBankDetails({
+                        ...bankDetails,
+                        routingNumber: e.target.value,
+                      })
+                    }
+                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="account-number"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Bank Account Number
+                  </label>
+                  <input
+                    id="account-number"
+                    type="text"
+                    placeholder="9876543210"
+                    value={bankDetails.accountNumber}
+                    onChange={(e) =>
+                      setBankDetails({
+                        ...bankDetails,
+                        accountNumber: e.target.value,
+                      })
+                    }
+                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="account-type"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Account Type
+                  </label>
+                  <select
+                    id="account-type"
+                    value={bankDetails.accountType}
+                    onChange={(e) =>
+                      setBankDetails({
+                        ...bankDetails,
+                        accountType: e.target.value,
+                      })
+                    }
+                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  >
+                    <option value="checking">Checking</option>
+                    <option value="savings">Savings</option>
+                  </select>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAddBankAccountOpen(false)}
+                    className="btn btn-secondary"
+                  >
+                    Back
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    Save Details
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() =>
+                    setWithdrawConfirmation({ isOpen: false, storeId: null })
+                  }
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setAddBankAccountOpen(true)}
+                  className="btn btn-secondary"
+                >
+                  Add Bank Account Details
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
-} 
+}
