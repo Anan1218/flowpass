@@ -20,9 +20,9 @@ export default function Navbar() {
 
   const navigation = [
     { name: "Home", href: "/" },
-    { name: "Case Studies", href: "/case-studies" },
+    // { name: "Case Studies", href: "/case-studies" },
     { name: "Pricing", href: "/pricing" },
-    { name: "Privacy Policy", href: "/privacy" },
+    // { name: "Privacy Policy", href: "/privacy" },
   ];
 
   return (

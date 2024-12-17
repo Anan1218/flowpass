@@ -5,6 +5,10 @@ import { AuthContextProvider } from '@/contexts/AuthContext';
 export const metadata: Metadata = {
   title: "ScanPass",
   description: "QR Code Validation System",
+  icons: {
+    icon: '/scanpasslogo.png',
+    apple: '/scanpasslogo.png',
+  },
 };
 
 // This layout should apply to customer-flow routes only

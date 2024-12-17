@@ -4,6 +4,7 @@ import { SectionTitle } from "../components/homepage/SectionTitle";
 import { Faq } from "../components/homepage/Faq";
 import Navbar from "../components/Navbar/Navbar";
 import { Features } from "../components/homepage/Features";
+import Footer from "../components/Footer/Footer";
 
 export default function Home() {
   return (
@@ -20,6 +21,7 @@ export default function Home() {
         </SectionTitle>
         <Faq />
       </Container>
+      <Footer />
     </>
   );
 }
