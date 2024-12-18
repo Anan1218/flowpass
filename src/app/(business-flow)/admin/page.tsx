@@ -5,12 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { collection, addDoc, query, where, orderBy, getDocs, deleteDoc, doc, limit } from 'firebase/firestore';
 import { db } from '@/utils/firebase';
-import { nanoid } from 'nanoid';
-import QRCode from 'react-qr-code';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/utils/firebase';
-import Link from 'next/link';
-import Image from 'next/image';
+import { nanoid } from 'nanoid';
 import PassesTab from './components/tabs/PassesTab';
 import AnalyticsTab from './components/tabs/AnalyticsTab';
 import CalendarTab from './components/tabs/CalendarTab';
@@ -110,8 +107,8 @@ export default function AdminDashboard() {
       
       setStores(storesData);
       setLoading(false);
-    } catch (error) {
-      console.error('Error loading stores:', error);
+    } catch (err) {
+      console.error('Error loading stores:', err);
       setError('Failed to load stores');
       setLoading(false);
     }
@@ -357,6 +354,19 @@ export default function AdminDashboard() {
 
   return (
     <div className="max-w-[1200px] mx-auto">
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <span className="block sm:inline">{error}</span>
+          <span className="absolute top-0 bottom-0 right-0 px-4 py-3" onClick={() => setError('')}>
+            <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <title>Close</title>
+              <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+            </svg>
+          </span>
+        </div>
+      )}
+      
       {/* Header Section */}
       <div className="flex justify-between items-center p-4 border-b border-gray-800">
         <div className="flex items-center gap-4">
