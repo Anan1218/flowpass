@@ -11,6 +11,11 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/utils/firebase';
 import Link from 'next/link';
 import Image from 'next/image';
+import PassesTab from './components/tabs/PassesTab';
+import AnalyticsTab from './components/tabs/AnalyticsTab';
+import CalendarTab from './components/tabs/CalendarTab';
+import OrdersTab from './components/tabs/OrdersTab';
+import VenueInfoTab from './components/tabs/VenueInfoTab';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
@@ -37,6 +42,14 @@ interface Pass {
   usedAt: any | null;
   expiresAt: any;
   paymentIntentId: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  productType: 'LineSkip' | 'Cover' | 'Menu' | string;
+  passName: string;
+  serviceFee: number;
+  tipAmount: number;
+  totalAmount: number;
 }
 
 interface StoreStats {
@@ -49,6 +62,9 @@ interface StoreStats {
     recentPasses: Pass[];
   }
 }
+
+// Add new type for active tab
+type ActiveTab = 'ANALYTICS' | 'PASSES' | 'CALENDAR' | 'ORDERS' | 'VENUE_INFO';
 
 export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuthContext();
@@ -72,6 +88,8 @@ export default function AdminDashboard() {
     storeId: null
   });
   const [storeStats, setStoreStats] = useState<StoreStats>({});
+  const [activeTab, setActiveTab] = useState<ActiveTab>('PASSES');
+  const [passes, setPasses] = useState<Pass[]>([]);
 
   // Function to load existing stores
   const loadStores = useCallback(async () => {
@@ -297,6 +315,38 @@ export default function AdminDashboard() {
     }
   }, [stores]);
 
+  // Add this function to load passes
+  const loadPasses = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const passesRef = collection(db, 'passes');
+      const storeIds = stores.map(store => store.storeId);
+      
+      const q = query(
+        passesRef,
+        where('storeId', 'in', storeIds)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const passesData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Pass[];
+      
+      setPasses(passesData);
+    } catch (error) {
+      console.error('Error loading passes:', error);
+    }
+  }, [user, stores]);
+
+  // Add this to your useEffect that loads data
+  useEffect(() => {
+    if (stores.length > 0) {
+      loadPasses();
+    }
+  }, [stores, loadPasses]);
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -306,22 +356,79 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
-      
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 text-red-700 mb-4">
-          {error}
+    <div className="max-w-[1200px] mx-auto">
+      {/* Header Section */}
+      <div className="flex justify-between items-center p-4 border-b border-gray-800">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">Active Passes:</span>
+            <span className="font-bold">{stores.reduce((acc, store) => 
+              acc + (storeStats[store.storeId]?.dailyPasses?.remainingPasses || 0), 0)}</span>
+          </div>
         </div>
-      )}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="btn btn-primary"
+          >
+            Add Pass
+          </button>
+        </div>
+      </div>
 
-      <div className="mb-8">
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="btn btn-primary"
-        >
-          Create New Store
-        </button>
+      {/* Navigation Tabs */}
+      <div className="border-b border-gray-800">
+        <nav className="flex">
+          {[
+            { id: 'ANALYTICS', label: 'Analytics' },
+            { id: 'PASSES', label: 'Passes' },
+            { id: 'CALENDAR', label: 'Calendar' },
+            { id: 'ORDERS', label: 'Orders' },
+            { id: 'VENUE_INFO', label: 'Venue Info' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as ActiveTab)}
+              className={`px-6 py-4 text-sm font-medium border-b-2 ${
+                activeTab === tab.id
+                  ? 'border-indigo-500 text-indigo-500'
+                  : 'border-transparent text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Main Content */}
+      <div className="p-6">
+        {activeTab === 'PASSES' && (
+          <PassesTab 
+            stores={stores} 
+            storeStats={storeStats} 
+            onDeleteClick={handleDeleteClick} 
+          />
+        )}
+        
+        {activeTab === 'ANALYTICS' && (
+          <AnalyticsTab 
+            stores={stores} 
+            storeStats={storeStats}
+          />
+        )}
+        
+        {activeTab === 'CALENDAR' && <CalendarTab />}
+        
+        {activeTab === 'ORDERS' && (
+          <OrdersTab 
+            stores={stores}
+            passes={passes}
+          />
+        )}
+        
+        {activeTab === 'VENUE_INFO' && <VenueInfoTab />}
       </div>
 
       {/* New Store Modal */}
@@ -406,149 +513,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-
-      <div>
-        <h2 className="text-xl font-bold mb-4">Your Stores</h2>
-        <div className="space-y-6">
-          {stores.map((store) => (
-            <div key={store.storeId} className="border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
-              <div className="p-6">
-                <div className="flex flex-col md:flex-row gap-6">
-                  {/* Store Info Section */}
-                  <div className="md:w-1/3">
-                    {/* Store Header Image */}
-                    {store.imageUrl && (
-                      <div className="mb-4 w-full h-48 rounded-lg overflow-hidden">
-                        <Image 
-                          src={store.imageUrl} 
-                          alt={store.name}
-                          width={500}
-                          height={300}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-
-                    {/* Store Info */}
-                    <div className="text-center mb-4">
-                      <h3 className="font-bold text-xl text-gray-900">{store.name}</h3>
-                      <p className="text-sm text-gray-900 mt-1">
-                        ${store.price} per pass • {store.maxPasses} passes/night
-                      </p>
-                      <p className="text-sm text-gray-700 mt-1">
-                        Created {new Date(store.createdAt.toDate()).toLocaleDateString()}
-                      </p>
-                    </div>
-
-                    {/* QR Code */}
-                    <div className="flex items-center justify-center py-2">
-                      <div className="w-32">
-                        <QRCode
-                          value={store.storeUrl}
-                          style={{ width: '100%', height: 'auto' }}
-                        />
-                      </div>
-                    </div>
-                    
-                    <p className="text-sm text-gray-900 break-all text-center mt-2">
-                      {store.storeUrl}
-                    </p>
-
-                    {/* Add Visit Store Button */}
-                    <div className="mt-2 text-center">
-                      <Link 
-                        href={store.storeUrl}
-                        target="_blank"
-                        className="inline-flex items-center text-blue-600 hover:text-blue-700"
-                      >
-                        Visit Store →
-                      </Link>
-                    </div>
-                  </div>
-
-                  {/* Stats Section */}
-                  <div className="md:w-2/3">
-                    {/* Stats Grid - First Row */}
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      {/* Daily Passes Status */}
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <h4 className="font-semibold text-black text-sm mb-2">Today's Passes</h4>
-                        {storeStats[store.storeId]?.dailyPasses ? (
-                          <p className="text-center text-2xl font-bold text-black">
-                            {storeStats[store.storeId]?.dailyPasses?.remainingPasses} / {store.maxPasses} remaining
-                          </p>
-                        ) : (
-                          <p className="text-center text-black">
-                            <span className="text-2xl font-bold">{store.maxPasses} / {store.maxPasses} remaining</span>
-                            <span className="block text-sm mt-1">No passes used today</span>
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Daily Profit */}
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <h4 className="font-semibold text-black text-sm mb-2">Today's Profit</h4>
-                        <p className="text-center">
-                          <span className="text-2xl font-bold text-green-600">
-                            ${storeStats[store.storeId]?.dailyProfit?.toFixed(2) || '0.00'}
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Recent Passes with View All button */}
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <h4 className="font-semibold text-black text-sm">Recent Passes</h4>
-                        <Link 
-                          href={`/admin/transactions/${store.storeId}`}
-                          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                        >
-                          View All Transactions →
-                        </Link>
-                      </div>
-                      {storeStats[store.storeId]?.recentPasses?.length > 0 ? (
-                        <div className="space-y-2">
-                          {storeStats[store.storeId].recentPasses.map((pass) => (
-                            <div key={pass.id} className="text-sm p-3 bg-gray-50 rounded flex flex-col">
-                              <div className="flex justify-between items-center">
-                                <span className="font-medium text-black">
-                                  {pass.quantity} {pass.quantity === 1 ? 'pass' : 'passes'}
-                                </span>
-                                <span className="text-sm text-black">
-                                  {new Date(pass.createdAt.toDate()).toLocaleString()}
-                                </span>
-                              </div>
-                              <div className="text-sm text-black mt-1">
-                                Status: {pass.active ? 'Active' : 'Used'}
-                                {pass.usedAt && ` at ${new Date(pass.usedAt.toDate()).toLocaleString()}`}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-center py-4 text-sm text-black bg-gray-50 rounded">
-                          No recent passes
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Delete Button */}
-                    <div className="mt-4">
-                      <button
-                        onClick={() => handleDeleteClick(store.id)}
-                        className="w-full px-4 py-2.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                      >
-                        Delete Store
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {deleteConfirmation.isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

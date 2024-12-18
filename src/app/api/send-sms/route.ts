@@ -14,11 +14,12 @@ export async function POST(request: Request) {
     console.log('Sending SMS to:', phoneNumber);
     console.log('Message:', message);
 
-    await client.messages.create({
-      body: message,
-      from: twilioPhoneNumber,
-      to: phoneNumber
-    });
+    // TODO: Uncomment this when Twilio approves
+    // await client.messages.create({
+    //   body: message,
+    //   from: twilioPhoneNumber,
+    //   to: phoneNumber
+    // });
 
     return NextResponse.json({ success: true });
   } catch (error) {
