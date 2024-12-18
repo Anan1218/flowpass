@@ -20,12 +20,16 @@ export default function AnalyticsTab({ stores, storeStats }: AnalyticsTabProps) 
     venue: 'All',
     productType: 'All',
     dayOfWeek: 'All',
-    timeframe: 'Year to Date'
+    timeframe: 'Today'
   });
 
   // Calculate total revenue across all stores
   const totalRevenue = Object.values(storeStats).reduce((acc, stat) => {
-    return acc + (stat.dailyProfit || 0);
+    // Include all passes in revenue calculation, not just recent ones
+    const storeRevenue = stat.recentPasses?.reduce((passAcc, pass) => {
+      return passAcc + (pass.totalAmount || 0);
+    }, 0) || 0;
+    return acc + storeRevenue;
   }, 0);
 
   // Calculate total units sold
@@ -33,7 +37,7 @@ export default function AnalyticsTab({ stores, storeStats }: AnalyticsTabProps) 
     return acc + (stat.recentPasses?.length || 0);
   }, 0);
 
-  // Calculate unique customers (this is a placeholder - you'll need to implement actual tracking)
+  // Calculate unique customers
   const uniqueCustomers = new Set(
     Object.values(storeStats).flatMap(stat => 
       stat.recentPasses?.map(pass => pass.passId) || []
@@ -53,7 +57,7 @@ export default function AnalyticsTab({ stores, storeStats }: AnalyticsTabProps) 
             <select
               value={filters.venue}
               onChange={(e) => setFilters(prev => ({ ...prev, venue: e.target.value }))}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
             >
               <option value="All">All</option>
               {stores.map(store => (
@@ -72,7 +76,7 @@ export default function AnalyticsTab({ stores, storeStats }: AnalyticsTabProps) 
             <select
               value={filters.productType}
               onChange={(e) => setFilters(prev => ({ ...prev, productType: e.target.value }))}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
             >
               <option value="All">All</option>
               <option value="LineSkip">LineSkip</option>
@@ -89,7 +93,7 @@ export default function AnalyticsTab({ stores, storeStats }: AnalyticsTabProps) 
             <select
               value={filters.dayOfWeek}
               onChange={(e) => setFilters(prev => ({ ...prev, dayOfWeek: e.target.value }))}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
             >
               <option value="All">All</option>
               <option value="Monday">Monday</option>
@@ -110,25 +114,15 @@ export default function AnalyticsTab({ stores, storeStats }: AnalyticsTabProps) 
             <select
               value={filters.timeframe}
               onChange={(e) => setFilters(prev => ({ ...prev, timeframe: e.target.value }))}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
             >
-              <option value="Year to Date">Year to Date</option>
-              <option value="Last Month">Last Month</option>
-              <option value="Last Week">Last Week</option>
-              <option value="Yesterday">Yesterday</option>
               <option value="Today">Today</option>
+              <option value="Yesterday">Yesterday</option>
+              <option value="Last Week">Last Week</option>
+              <option value="Last Month">Last Month</option>
+              <option value="Year to Date">Year to Date</option>
             </select>
           </div>
-        </div>
-
-        {/* Export PDF Button */}
-        <div className="mt-4 flex justify-end">
-          <button className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700 flex items-center gap-2">
-            <span>PDF</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-          </button>
         </div>
       </div>
 
@@ -210,7 +204,6 @@ export default function AnalyticsTab({ stores, storeStats }: AnalyticsTabProps) 
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">33%</td>
               </tr>
-              {/* Add more rows as needed */}
             </tbody>
           </table>
         </div>

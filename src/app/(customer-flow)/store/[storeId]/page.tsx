@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { db } from '@/utils/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import PaymentForm from '@/components/payment/PaymentForm';
-import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css';
-import Image from 'next/image';
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { db } from "@/utils/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import PaymentForm from "@/components/payment/PaymentForm";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import Image from "next/image";
 
 interface StoreData {
   name: string;
@@ -27,7 +27,7 @@ export default function StorefrontPage() {
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [availablePasses, setAvailablePasses] = useState(0);
-  const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [isValidPhone, setIsValidPhone] = useState(false);
 
   useEffect(() => {
@@ -35,9 +35,9 @@ export default function StorefrontPage() {
       try {
         // Get store data
         const storeQuery = query(
-          collection(db, 'stores'),
-          where('storeId', '==', params.storeId),
-          where('active', '==', true)
+          collection(db, "stores"),
+          where("storeId", "==", params.storeId),
+          where("active", "==", true)
         );
 
         const storeSnapshot = await getDocs(storeQuery);
@@ -51,14 +51,14 @@ export default function StorefrontPage() {
             active: data.active,
             imageUrl: data.imageUrl,
             price: data.price,
-            maxPasses: data.maxPasses
+            maxPasses: data.maxPasses,
           });
 
           // Get today's date at 8 AM
           const now = new Date();
           const today8am = new Date(now);
           today8am.setHours(8, 0, 0, 0);
-          
+
           // If current time is before 8 AM, use previous day's 8 AM
           if (now < today8am) {
             today8am.setDate(today8am.getDate() - 1);
@@ -66,15 +66,15 @@ export default function StorefrontPage() {
 
           // Get passes since last 8 AM
           const passesQuery = query(
-            collection(db, 'passes'),
-            where('storeId', '==', params.storeId),
-            where('createdAt', '>=', today8am)
+            collection(db, "passes"),
+            where("storeId", "==", params.storeId),
+            where("createdAt", ">=", today8am)
           );
 
           const passesSnapshot = await getDocs(passesQuery);
-          
+
           let totalPassesSold = 0;
-          passesSnapshot.docs.forEach(doc => {
+          passesSnapshot.docs.forEach((doc) => {
             const passData = doc.data();
             const quantity = passData.quantity || 1;
             totalPassesSold += quantity;
@@ -82,10 +82,10 @@ export default function StorefrontPage() {
           // const totalPassesSold = 5;
           setAvailablePasses(data.maxPasses - totalPassesSold);
         } else {
-          setError('Store not found or inactive');
+          setError("Store not found or inactive");
         }
       } catch (err) {
-        setError('Error loading store data');
+        setError("Error loading store data");
         console.error(err);
       } finally {
         setLoading(false);
@@ -108,13 +108,15 @@ export default function StorefrontPage() {
     try {
       // Construct the URL for the order confirmation page
       const passUrl = `${window.location.origin}/order-confirmation/${passId}?quantity=${quantity}`;
-      const smsMessage = `Thank you for purchasing ${quantity} pass${quantity > 1 ? 'es' : ''} at ${storeData?.name}. Access your pass here: ${passUrl}`;
-    
+      const smsMessage = `Thank you for purchasing ${quantity} pass${
+        quantity > 1 ? "es" : ""
+      } at ${storeData?.name}. Access your pass here: ${passUrl}`;
+
       // Send SMS notification
-      const response = await fetch('/api/send-sms', {
-        method: 'POST',
+      const response = await fetch("/api/send-sms", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           phoneNumber: phoneNumber,
@@ -123,25 +125,27 @@ export default function StorefrontPage() {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to send SMS');
+        throw new Error(data.error || "Failed to send SMS");
       }
 
       // Update the available passes count
-      setAvailablePasses(prev => prev - quantity);
+      setAvailablePasses((prev) => prev - quantity);
 
       // Navigate to the order confirmation page
       window.location.href = `/order-confirmation/${passId}?quantity=${quantity}`;
     } catch (error) {
-      console.error('Error sending notification:', error);
-      alert('Your payment was successful but we could not send the confirmation SMS. Please save your confirmation URL.');
+      console.error("Error sending notification:", error);
+      alert(
+        "Your payment was successful but we could not send the confirmation SMS. Please save your confirmation URL."
+      );
       window.location.href = `/order-confirmation/${passId}?quantity=${quantity}`;
     }
   };
 
   const handlePhoneChange = (value: string | undefined) => {
-    setPhoneNumber(value || '');
+    setPhoneNumber(value || "");
     setIsValidPhone(value ? value.length >= 10 : false);
   };
 
@@ -176,9 +180,9 @@ export default function StorefrontPage() {
   return (
     <div className="max-w-md mx-auto bg-gray-900 min-h-screen text-white">
       <div className="relative">
-        <Image 
-          src={storeData.imageUrl || '/default-store-image.jpg'} 
-          alt={storeData.name} 
+        <Image
+          src={storeData.imageUrl || "/default-store-image.jpg"}
+          alt={storeData.name}
           width={800}
           height={400}
           className="w-full h-64 object-cover brightness-75"
@@ -197,7 +201,7 @@ export default function StorefrontPage() {
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-xl mb-4">Select Quantity</h3>
           <div className="flex items-center justify-between">
-            <button 
+            <button
               onClick={() => handleQuantityChange(-1)}
               disabled={quantity <= 1}
               className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-2xl disabled:opacity-50"
@@ -205,7 +209,7 @@ export default function StorefrontPage() {
               -
             </button>
             <span className="text-3xl font-bold">{quantity}</span>
-            <button 
+            <button
               onClick={() => handleQuantityChange(1)}
               disabled={quantity >= availablePasses}
               className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-2xl disabled:opacity-50"
@@ -228,8 +232,8 @@ export default function StorefrontPage() {
       </div>
 
       <div className="bg-gray-800 rounded-lg p-4">
-        <PaymentForm 
-          storeId={params.storeId as string} 
+        <PaymentForm
+          storeId={params.storeId as string}
           quantity={quantity}
           price={storeData.price}
           onSuccess={(passId) => updateAvailablePasses(passId)}
@@ -239,4 +243,4 @@ export default function StorefrontPage() {
       </div>
     </div>
   );
-} 
+}
