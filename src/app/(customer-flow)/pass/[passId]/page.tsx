@@ -90,50 +90,51 @@ export default function PassValidationPage() {
   const handleScan = async (scannedData: string | null) => {
     if (!scannedData) return;
     
-    try {
-      // Reset scan error at the start of each new scan attempt
-      setScanError(null);
+    return true;
+    // try {
+    //   // Reset scan error at the start of each new scan attempt
+    //   setScanError(null);
       
-      console.log('Scanned Data:', scannedData);
+    //   console.log('Scanned Data:', scannedData);
       
-      // Extract storeId from the URL
-      const scannedStoreId = scannedData.split('/store/')[1];
-      console.log('Extracted Store ID:', scannedStoreId);
-      console.log('Expected Store ID:', passData?.storeId);
+    //   // Extract storeId from the URL
+    //   const scannedStoreId = scannedData.split('/store/')[1];
+    //   console.log('Extracted Store ID:', scannedStoreId);
+    //   console.log('Expected Store ID:', passData?.storeId);
       
-      // Verify that the scanned QR code matches the expected store
-      if (passData && scannedStoreId === passData.storeId) {
-        // Get the pass document reference
-        const passQuery = query(
-          collection(db, 'passes'),
-          where('passId', '==', params.passId),
-          where('active', '==', true)
-        );
+    //   // Verify that the scanned QR code matches the expected store
+    //   if (passData && scannedStoreId === passData.storeId) {
+    //     // Get the pass document reference
+    //     const passQuery = query(
+    //       collection(db, 'passes'),
+    //       where('passId', '==', params.passId),
+    //       where('active', '==', true)
+    //     );
         
-        const passSnapshot = await getDocs(passQuery);
+    //     const passSnapshot = await getDocs(passQuery);
         
-        if (!passSnapshot.empty) {
-          const passDoc = passSnapshot.docs[0];
+    //     if (!passSnapshot.empty) {
+    //       const passDoc = passSnapshot.docs[0];
           
-          // Update the pass to set active to false
-          await updateDoc(doc(db, 'passes', passDoc.id), {
-            active: false,
-            usedAt: new Date()
-          });
+    //       // Update the pass to set active to false
+    //       await updateDoc(doc(db, 'passes', passDoc.id), {
+    //         active: false,
+    //         usedAt: new Date()
+    //       });
           
-          setPassData(prev => prev ? { ...prev, active: false } : null);
-          setHasScanned(true);
-          setScanError(null);
-        } else {
-          setScanError('Pass not found or already used');
-        }
-      } else {
-        setScanError('Invalid QR code for this pass');
-      }
-    } catch (err) {
-      console.error('Scan Error:', err);
-      setScanError('Error processing QR code');
-    }
+    //       setPassData(prev => prev ? { ...prev, active: false } : null);
+    //       setHasScanned(true);
+    //       setScanError(null);
+    //     } else {
+    //       setScanError('Pass not found or already used');
+    //     }
+    //   } else {
+    //     setScanError('Invalid QR code for this pass');
+    //   }
+    // } catch (err) {
+    //   console.error('Scan Error:', err);
+    //   setScanError('Error processing QR code');
+    // }
   };
 
   const handleError = (err: Error) => {

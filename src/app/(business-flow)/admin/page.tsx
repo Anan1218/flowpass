@@ -10,9 +10,9 @@ import { storage } from '@/utils/firebase';
 import { nanoid } from 'nanoid';
 import PassesTab from './components/tabs/PassesTab';
 import AnalyticsTab from './components/tabs/AnalyticsTab';
-import CalendarTab from './components/tabs/CalendarTab';
+// import CalendarTab from './components/tabs/CalendarTab';
 import OrdersTab from './components/tabs/OrdersTab';
-import VenueInfoTab from './components/tabs/VenueInfoTab';
+// import VenueInfoTab from './components/tabs/VenueInfoTab';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
