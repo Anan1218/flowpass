@@ -23,14 +23,14 @@ export default function AnalyticsTab({ stores, storeStats }: AnalyticsTabProps) 
     timeframe: 'Today'
   });
 
-  // Calculate total revenue across all stores
-  const totalRevenue = Object.values(storeStats).reduce((acc, stat) => {
-    // Include all passes in revenue calculation, not just recent ones
-    const storeRevenue = stat.recentPasses?.reduce((passAcc, pass) => {
-      return passAcc + (pass.totalAmount || 0);
-    }, 0) || 0;
-    return acc + storeRevenue;
-  }, 0);
+  // // Calculate total revenue across all stores
+  // const totalRevenue = Object.values(storeStats).reduce((acc, stat) => {
+  //   // Include all passes in revenue calculation, not just recent ones
+  //   const storeRevenue = stat.recentPasses?.reduce((passAcc, pass) => {
+  //     return passAcc + (pass.totalAmount || 0);
+  //   }, 0) || 0;
+  //   return acc + storeRevenue;
+  // }, 0);
 
   // Calculate total units sold
   const totalUnitsSold = Object.values(storeStats).reduce((acc, stat) => {

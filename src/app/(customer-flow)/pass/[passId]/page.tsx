@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { db } from '@/utils/firebase';
-import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs} from 'firebase/firestore';
+// import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import ScanResult from '@/components/scanner/ScanResult';
 import QRScanner from '@/components/scanner/QRScanner';
 
