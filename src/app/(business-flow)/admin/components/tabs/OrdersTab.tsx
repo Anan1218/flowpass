@@ -83,12 +83,12 @@ export default function OrdersTab({ stores, passes }: OrdersTabProps) {
             <select
               value={filters.timeframe}
               onChange={(e) => setFilters(prev => ({ ...prev, timeframe: e.target.value }))}
-              className="border border-gray-300 rounded-md px-3 py-2 bg-white text-sm"
+              className="border border-gray-300 rounded-md px-3 py-2 bg-white text-sm text-black"
             >
-              <option value="Last 30 Days">Last 30 Days</option>
-              <option value="Last Week">Last Week</option>
-              <option value="Today">Today</option>
-              <option value="Custom">Custom</option>
+              <option className="text-black" value="Last 30 Days">Last 30 Days</option>
+              <option className="text-black" value="Last Week">Last Week</option>
+              <option className="text-black" value="Today">Today</option>
+              <option className="text-black" value="Custom">Custom</option>
             </select>
           </div>
 
@@ -97,37 +97,26 @@ export default function OrdersTab({ stores, passes }: OrdersTabProps) {
             <select
               value={filters.productType}
               onChange={(e) => setFilters(prev => ({ ...prev, productType: e.target.value }))}
-              className="border border-gray-300 rounded-md px-3 py-2 bg-white text-sm"
+              className="border border-gray-300 rounded-md px-3 py-2 bg-white text-sm text-black"
             >
-              <option value="All">All Products</option>
-              <option value="LineSkip">Line Skip</option>
-              <option value="Cover">Cover</option>
-              <option value="Menu">Menu</option>
+              <option className="text-black" value="All">All Products</option>
+              <option className="text-black" value="LineSkip">Line Skip</option>
+              <option className="text-black" value="Cover">Cover</option>
+              <option className="text-black" value="Menu">Menu</option>
             </select>
           </div>
 
           {/* Redeemed Filter */}
-          <div className="flex gap-1">
-            <button
-              onClick={() => setFilters(prev => ({ ...prev, redeemed: 'Yes' }))}
-              className={`px-3 py-1 rounded-l-md text-sm ${
-                filters.redeemed === 'Yes' 
-                  ? 'bg-green-100 text-green-800 border border-green-200' 
-                  : 'bg-gray-100 text-gray-600 border border-gray-200'
-              }`}
+          <div>
+            <select
+              value={filters.redeemed}
+              onChange={(e) => setFilters(prev => ({ ...prev, redeemed: e.target.value }))}
+              className="border border-gray-300 rounded-md px-3 py-2 bg-white text-sm text-black"
             >
-              Yes
-            </button>
-            <button
-              onClick={() => setFilters(prev => ({ ...prev, redeemed: 'No' }))}
-              className={`px-3 py-1 rounded-r-md text-sm ${
-                filters.redeemed === 'No'
-                  ? 'bg-red-100 text-red-800 border border-red-200'
-                  : 'bg-gray-100 text-gray-600 border border-gray-200'
-              }`}
-            >
-              No
-            </button>
+              <option className="text-black" value="All">All Status</option>
+              <option className="text-black" value="Yes">Redeemed</option>
+              <option className="text-black" value="No">Not Redeemed</option>
+            </select>
           </div>
         </div>
 

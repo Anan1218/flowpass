@@ -419,7 +419,7 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="btn btn-primary"
+            className="btn btn-primary bg-indigo-600"
           >
             Add Pass
           </button>
@@ -432,9 +432,9 @@ export default function AdminDashboard() {
           {[
             { id: 'ANALYTICS', label: 'Analytics' },
             { id: 'PASSES', label: 'Passes' },
-            { id: 'CALENDAR', label: 'Calendar' },
+            // { id: 'CALENDAR', label: 'Calendar' },
             { id: 'ORDERS', label: 'Orders' },
-            { id: 'VENUE_INFO', label: 'Venue Info' },
+            // { id: 'VENUE_INFO', label: 'Venue Info' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -468,7 +468,7 @@ export default function AdminDashboard() {
           />
         )}
         
-        {activeTab === 'CALENDAR' && <CalendarTab />}
+        {/* {activeTab === 'CALENDAR' && <CalendarTab />} */}
         
         {activeTab === 'ORDERS' && (
           <OrdersTab 
@@ -477,7 +477,7 @@ export default function AdminDashboard() {
           />
         )}
         
-        {activeTab === 'VENUE_INFO' && <VenueInfoTab />}
+        {/* {activeTab === 'VENUE_INFO' && <VenueInfoTab />} */}
       </div>
 
       {/* New Store Modal */}
